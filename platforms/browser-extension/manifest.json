@@ -1,0 +1,55 @@
+{
+  "manifest_version": 3,
+  "name": "DOPE Assistant",
+  "version": "1.2.0",
+  "description": "Pi-inspired AI voice assistant for Chrome and Microsoft Edge. Press Alt+D or say 'Hey Dop' to control Chrome with voice & sound feedback.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "scripting",
+    "sidePanel",
+    "storage",
+    "nativeMessaging"
+  ],
+  "host_permissions": [
+    "https://*/*",
+    "http://localhost:*/*",
+    "http://127.0.0.1:*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "DOPE Assistant (Alt+D)",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["hotkey_content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "activate-dope": {
+      "suggested_key": {
+        "default": "Alt+D",
+        "mac": "Alt+D"
+      },
+      "description": "Activate DOPE Voice Assistant (Alt+D)"
+    }
+  }
+}

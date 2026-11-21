@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>DOPE Assistant</title>
+    <link rel="stylesheet" href="ui.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="header">
+        <div class="brand">
+          <img src="icons/icon48.png" alt="DOPE logo" />
+          <div class="brand-title">
+            <h1>DOPE</h1>
+            <span class="shortcut-tag">Press Alt + D + T</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button id="soundToggleBtn" class="icon-btn active" type="button" title="Toggle sound chimes">Sound On</button>
+          <button id="openSidePanelBtn" class="icon-btn" type="button">Side Panel</button>
+          <button id="settingsToggleBtn" class="icon-btn" type="button">Server</button>
+        </div>
+      </header>
+
+      <div id="settingsBox" class="settings-box" hidden>
+        <label for="serverUrlInput">DOPE Backend URL (Required for Gemini AI Q&amp;A)</label>
+        <input id="serverUrlInput" type="url" placeholder="https://your-dope-url.run.app" />
+        <button id="saveServerBtn" class="icon-btn" type="button">Save Backend URL</button>
+      </div>
+
+      <section class="orb-stage">
+        <div class="orb-wrap">
+          <button id="micBtn" class="mic-orb" type="button" aria-label="Activate DOPE voice">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" x2="12" y1="19" y2="22"/>
+            </svg>
+          </button>
+        </div>
+        <div id="waveBars" class="wave-bars" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div id="orbStatus" class="orb-status">Hey Dop is ready</div>
+        <div id="orbSub" class="orb-sub">Press Alt + D + T (or Alt + D) or tap the orb to speak.</div>
+        <div class="orb-controls">
+          <button id="wakeBtn" class="icon-btn" type="button">Hey Dop Mode</button>
+          <select id="langSelect" class="lang-select" aria-label="Voice recognition language">
+            <option value="en-IN">Hinglish / EN-IN</option>
+            <option value="hi-IN">Hindi (hi-IN)</option>
+            <option value="en-US">English (en-US)</option>
+          </select>
+        </div>
+      </section>
+
+      <section id="feed" class="feed" aria-live="polite">
+        <div class="orb-sub empty-hint">Ask any AI question ("What is quantum computing?", "25 * 48 kitna hota hai") or say "YouTube kholo", "new tab", "scroll down".</div>
+      </section>
+
+      <div class="quick-grid">
+        <button class="quick-btn" type="button" data-cmd="Hey Dop, open YouTube">YouTube</button>
+        <button class="quick-btn" type="button" data-cmd="Hey Dop, new tab">New Tab</button>
+        <button class="quick-btn" type="button" data-cmd="Hey Dop, scroll down">Scroll ↓</button>
+        <button class="quick-btn" type="button" data-cmd="Hey Dop, zoom in">Zoom +</button>
+        <button class="quick-btn" type="button" data-cmd="Hey Dop, mute tab">Mute Tab</button>
+        <button class="quick-btn" type="button" data-cmd="Hey Dop, what is 25 * 48?">Ask AI</button>
+      </div>
+
+      <form id="cmdForm" class="input-row">
+        <input id="cmdInput" type="text" placeholder="Ask any AI question or say 'YouTube kholo'..." />
+        <button type="submit">Send</button>
+      </form>
+    </main>
+    <script src="ui.js"></script>
+  </body>
+</html>

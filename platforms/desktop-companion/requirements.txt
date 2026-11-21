@@ -1,0 +1,16 @@
+requests>=2.32.0
+keyboard>=0.13.5
+pynput>=1.7.7
+SpeechRecognition>=3.10.0
+pyttsx3>=2.90
+sounddevice>=0.4.6
+numpy>=1.26.0
+# Optional local wake-word engine (Python 3.10-3.12):
+# openwakeword>=0.6.0
+# Windows-specific automation & microphone audio
+PyAudio>=0.2.14; sys_platform == "win32"
+pywinauto>=0.6.8; sys_platform == "win32"
+pycaw>=20240210; sys_platform == "win32"
+comtypes>=1.4.0; sys_platform == "win32"
+# macOS-specific automation
+pyobjc-framework-Cocoa>=10.3; sys_platform == "darwin"

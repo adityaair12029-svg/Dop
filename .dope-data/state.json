@@ -1,0 +1,349 @@
+{
+  "history": [
+    {
+      "id": "cmd-fb6327d7",
+      "timestamp": "2026-11-21T12:59:11.298Z",
+      "raw_input": "Hey Dop, what is 25 * 48?",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "answer_question",
+        "platform": "web",
+        "requires_confirmation": false
+      },
+      "spoken_response": "25 * 48 = 1200.",
+      "status": "executed",
+      "ai_source": "offline_fallback"
+    },
+    {
+      "id": "cmd-d63ac7cf",
+      "timestamp": "2026-11-21T12:58:54.781Z",
+      "raw_input": "Who is Ada Lovelace?",
+      "wake_word_detected": false,
+      "language_hint": "auto",
+      "action": {
+        "action": "answer_question",
+        "platform": "web",
+        "requires_confirmation": false,
+        "parameters": {
+          "query": "Who is Ada Lovelace?"
+        }
+      },
+      "spoken_response": "Augusta Ada King, Countess of Lovelace, also known as Ada Lovelace, was an English mathematician and writer chiefly known for work on Charles Babbage's proposed mechanical general-purpose computer, the analytical engine. She was the first to recognise the machine had applications beyond pure calculation.",
+      "status": "executed",
+      "ai_source": "offline_fallback"
+    },
+    {
+      "id": "cmd-cad105ff",
+      "timestamp": "2026-11-21T12:58:54.016Z",
+      "raw_input": "Hey Dop, what is 25 * 48?",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "answer_question",
+        "platform": "web",
+        "requires_confirmation": false
+      },
+      "spoken_response": "25 * 48 = 1200.",
+      "status": "executed",
+      "ai_source": "offline_fallback"
+    },
+    {
+      "id": "cmd-15ede721",
+      "timestamp": "2026-11-21T11:41:45.285Z",
+      "raw_input": "Hey Dop, open YouTube.",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "open_url",
+        "target": "https://www.youtube.com",
+        "platform": "web",
+        "requires_confirmation": false
+      },
+      "spoken_response": "Opening YouTube. (Offline parser active — Gemini API key is not configured.)",
+      "status": "executed",
+      "ai_source": "offline_fallback",
+      "error_detail": "GEMINI_API_KEY is not configured; using offline deterministic parser."
+    },
+    {
+      "id": "cmd-7be7ab15",
+      "timestamp": "2026-11-21T11:37:03.953Z",
+      "raw_input": "Hey Dop, send email to alex@example.com",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "send_email",
+        "platform": "web",
+        "requires_confirmation": true,
+        "parameters": {
+          "to": "alex@example.com",
+          "subject": "Message via DOPE Assistant",
+          "body": ""
+        }
+      },
+      "spoken_response": "Please confirm sending an email to alex@example.com. (Offline parser active — Gemini API key is not configured.)",
+      "status": "awaiting_confirmation",
+      "ai_source": "offline_fallback",
+      "error_detail": "GEMINI_API_KEY is not configured; using offline deterministic parser."
+    },
+    {
+      "id": "cmd-e8d9a3b5",
+      "timestamp": "2026-11-21T11:36:50.782Z",
+      "raw_input": "Hey Dop, scroll down.",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "scroll",
+        "platform": "web",
+        "requires_confirmation": false,
+        "parameters": {
+          "direction": "down"
+        }
+      },
+      "spoken_response": "Scrolling down. (Offline parser active — Gemini API key is not configured.)",
+      "status": "executed",
+      "ai_source": "offline_fallback",
+      "error_detail": "GEMINI_API_KEY is not configured; using offline deterministic parser."
+    },
+    {
+      "id": "cmd-6dbcc880",
+      "timestamp": "2026-11-21T11:29:29.476Z",
+      "raw_input": "open Instagram",
+      "wake_word_detected": false,
+      "language_hint": "auto",
+      "action": {
+        "action": "open_app",
+        "target": "Instagram",
+        "platform": "windows",
+        "requires_confirmation": false
+      },
+      "spoken_response": "Cannot execute \"open_app\" from the web dashboard alone because the windows Desktop Companion is not connected. (Offline parser active — Gemini API key is not configured.)",
+      "status": "unsupported",
+      "ai_source": "offline_fallback",
+      "error_detail": "GEMINI_API_KEY is not configured; using offline deterministic parser."
+    },
+    {
+      "id": "cmd-01bdd5e2",
+      "timestamp": "2026-11-21T11:29:08.461Z",
+      "raw_input": "Open chat GPT",
+      "wake_word_detected": false,
+      "language_hint": "auto",
+      "action": {
+        "action": "open_app",
+        "target": "chat GPT",
+        "platform": "windows",
+        "requires_confirmation": false
+      },
+      "spoken_response": "Cannot execute \"open_app\" from the web dashboard alone because the windows Desktop Companion is not connected. (Offline parser active — Gemini API key is not configured.)",
+      "status": "unsupported",
+      "ai_source": "offline_fallback",
+      "error_detail": "GEMINI_API_KEY is not configured; using offline deterministic parser."
+    },
+    {
+      "id": "cmd-36891eb1",
+      "timestamp": "2026-11-21T11:28:58.100Z",
+      "raw_input": "open YouTube",
+      "wake_word_detected": false,
+      "language_hint": "auto",
+      "action": {
+        "action": "open_url",
+        "target": "https://www.youtube.com",
+        "platform": "web",
+        "requires_confirmation": false
+      },
+      "spoken_response": "Opening YouTube. (Offline parser active — Gemini API key is not configured.)",
+      "status": "executed",
+      "ai_source": "offline_fallback",
+      "error_detail": "GEMINI_API_KEY is not configured; using offline deterministic parser."
+    },
+    {
+      "id": "cmd-153fa264",
+      "timestamp": "2026-11-21T11:28:48.750Z",
+      "raw_input": "and search YouTube",
+      "wake_word_detected": false,
+      "language_hint": "auto",
+      "action": {
+        "action": "web_search",
+        "target": "https://www.google.com/search?q=YouTube",
+        "platform": "web",
+        "requires_confirmation": false,
+        "parameters": {
+          "query": "YouTube"
+        }
+      },
+      "spoken_response": "Searching Google for YouTube. (Offline parser active — Gemini API key is not configured.)",
+      "status": "executed",
+      "ai_source": "offline_fallback",
+      "error_detail": "GEMINI_API_KEY is not configured; using offline deterministic parser."
+    },
+    {
+      "id": "cmd-f33abd11",
+      "timestamp": "2026-11-21T11:28:36.222Z",
+      "raw_input": "open YouTube and search Google",
+      "wake_word_detected": false,
+      "language_hint": "auto",
+      "action": {
+        "action": "web_search",
+        "target": "https://www.google.com/search?q=Google",
+        "platform": "web",
+        "requires_confirmation": false,
+        "parameters": {
+          "query": "Google"
+        }
+      },
+      "spoken_response": "Searching Google for Google. (Offline parser active — Gemini API key is not configured.)",
+      "status": "executed",
+      "ai_source": "offline_fallback",
+      "error_detail": "GEMINI_API_KEY is not configured; using offline deterministic parser."
+    },
+    {
+      "id": "cmd-f60fcfcc",
+      "timestamp": "2026-11-21T11:27:28.527Z",
+      "raw_input": "Hey Dop, scroll down.",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "scroll",
+        "platform": "web",
+        "requires_confirmation": false,
+        "parameters": {
+          "direction": "down"
+        }
+      },
+      "spoken_response": "Scrolling down. (Offline parser active — Gemini API key is not configured.)",
+      "status": "executed",
+      "ai_source": "offline_fallback",
+      "error_detail": "GEMINI_API_KEY is not configured; using offline deterministic parser."
+    },
+    {
+      "id": "cmd-7da436da",
+      "timestamp": "2026-11-21T11:27:26.603Z",
+      "raw_input": "open google",
+      "wake_word_detected": false,
+      "language_hint": "auto",
+      "action": {
+        "action": "open_url",
+        "target": "https://www.google.com",
+        "platform": "web",
+        "requires_confirmation": false
+      },
+      "spoken_response": "Opening google. (Offline parser active — Gemini API key is not configured.)",
+      "status": "executed",
+      "ai_source": "offline_fallback",
+      "error_detail": "GEMINI_API_KEY is not configured; using offline deterministic parser."
+    },
+    {
+      "id": "cmd-4a13983c",
+      "timestamp": "2026-11-21T11:27:19.078Z",
+      "raw_input": "head of",
+      "wake_word_detected": false,
+      "language_hint": "auto",
+      "action": {
+        "action": "clarify",
+        "platform": "web",
+        "requires_confirmation": false
+      },
+      "spoken_response": "Gemini AI is currently unavailable and the offline parser could not match that phrase. Try a core command like \"Hey Dop, open YouTube\" or \"Hey Dop, scroll down\".",
+      "status": "clarification",
+      "ai_source": "offline_fallback",
+      "error_detail": "GEMINI_API_KEY is not configured; using offline deterministic parser."
+    },
+    {
+      "id": "cmd-bc13634b",
+      "timestamp": "2026-11-21T11:27:15.668Z",
+      "raw_input": "head of",
+      "wake_word_detected": false,
+      "language_hint": "auto",
+      "action": {
+        "action": "clarify",
+        "platform": "web",
+        "requires_confirmation": false
+      },
+      "spoken_response": "Gemini AI is currently unavailable and the offline parser could not match that phrase. Try a core command like \"Hey Dop, open YouTube\" or \"Hey Dop, scroll down\".",
+      "status": "clarification",
+      "ai_source": "offline_fallback",
+      "error_detail": "GEMINI_API_KEY is not configured; using offline deterministic parser."
+    },
+    {
+      "id": "cmd-ec3c022e",
+      "timestamp": "2026-11-21T11:27:12.065Z",
+      "raw_input": "head of",
+      "wake_word_detected": false,
+      "language_hint": "auto",
+      "action": {
+        "action": "clarify",
+        "platform": "web",
+        "requires_confirmation": false
+      },
+      "spoken_response": "Gemini AI is currently unavailable and the offline parser could not match that phrase. Try a core command like \"Hey Dop, open YouTube\" or \"Hey Dop, scroll down\".",
+      "status": "clarification",
+      "ai_source": "offline_fallback",
+      "error_detail": "GEMINI_API_KEY is not configured; using offline deterministic parser."
+    },
+    {
+      "id": "cmd-07d277e8",
+      "timestamp": "2026-11-21T11:26:57.696Z",
+      "raw_input": "head of open YouTube and search Google",
+      "wake_word_detected": false,
+      "language_hint": "auto",
+      "action": {
+        "action": "web_search",
+        "target": "https://www.google.com/search?q=Google",
+        "platform": "web",
+        "requires_confirmation": false,
+        "parameters": {
+          "query": "Google"
+        }
+      },
+      "spoken_response": "Searching Google for Google. (Offline parser active — Gemini API key is not configured.)",
+      "status": "executed",
+      "ai_source": "offline_fallback",
+      "error_detail": "GEMINI_API_KEY is not configured; using offline deterministic parser."
+    }
+  ],
+  "aliases": [
+    {
+      "id": "alias-study",
+      "phrase": "study mode",
+      "action": "open_url",
+      "target": "https://www.wikipedia.org",
+      "created_at": "2026-11-21T11:26:14.916Z"
+    },
+    {
+      "id": "alias-watch",
+      "phrase": "video time",
+      "action": "open_url",
+      "target": "https://www.youtube.com",
+      "created_at": "2026-11-21T11:26:14.917Z"
+    }
+  ],
+  "devices": [
+    {
+      "id": "dev-web-console",
+      "name": "This Browser Session",
+      "platform": "web",
+      "os_version": "Web Speech & PDF Testbench",
+      "status": "connected",
+      "remote_control_approved": true,
+      "paired_at": "2026-11-21T11:26:14.917Z",
+      "last_seen": "2026-11-21T11:26:14.917Z",
+      "capabilities": [
+        "open_url",
+        "web_search",
+        "pdf_testbench",
+        "gmail_oauth"
+      ]
+    }
+  ],
+  "pending_pairings": [],
+  "settings": {
+    "theme": "light",
+    "language": "auto",
+    "wake_word_enabled": false,
+    "wake_word_engine": "openwakeword",
+    "wake_word_sensitivity": 0.65,
+    "voice_feedback_enabled": true,
+    "store_history": true,
+    "remote_execution_requires_approval": true
+  }
+}

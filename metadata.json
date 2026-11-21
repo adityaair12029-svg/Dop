@@ -1,0 +1,6 @@
+{
+  "name": "DOPE",
+  "description": "DOPE — Universal AI Voice Assistant and Cross-Platform Device Automation Ecosystem",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

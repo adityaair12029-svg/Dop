@@ -1,0 +1,9 @@
+{
+  "name": "com.dope.assistant",
+  "description": "DOPE Native Desktop Companion Messaging Host",
+  "path": "C:\\Program Files\\DOPE\\dope_native_host.bat",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://REPLACE_WITH_YOUR_EXTENSION_ID/"
+  ]
+}
