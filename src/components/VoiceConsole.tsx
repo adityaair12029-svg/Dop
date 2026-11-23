@@ -33,6 +33,7 @@ import {
   type SpeechRecognitionLike,
 } from '../lib/speech';
 import { downloadVerifiedZip } from '../lib/downloadZip';
+import { AntigravityMark } from './AntigravityMark';
 import { AntigravityParticles } from './AntigravityParticles';
 
 export interface HistoryRecord {
@@ -631,12 +632,8 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
             />
 
             <div className="relative z-10 flex flex-col items-center">
-              <div className="ag-float mb-4 w-12 h-12 rounded-2xl bg-[#0B0C0F] border border-black/10 dark:border-white/15 flex items-center justify-center shadow-sm">
-                <img
-                  src="/el-dorado-logo.png"
-                  alt="El Dorado logo"
-                  className="w-8 h-8 object-contain"
-                />
+              <div className="ag-float mb-4 text-[#0A0A0C] dark:text-white">
+                <AntigravityMark variant="monochrome" className="w-10 h-10" />
               </div>
 
               <h1 className="text-[26px] sm:text-[32px] font-medium tracking-[-0.025em] text-center text-[#0A0A0C] dark:text-white leading-tight text-balance">

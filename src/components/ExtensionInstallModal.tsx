@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Check, Copy, Download, Laptop, Puzzle, ShieldAlert, X } from 'lucide-react';
 import { downloadVerifiedZip } from '../lib/downloadZip';
+import { AntigravityMark } from './AntigravityMark';
 
 interface ExtensionInstallModalProps {
   open: boolean;
@@ -71,12 +72,8 @@ export const ExtensionInstallModal: React.FC<ExtensionInstallModalProps> = ({
         {/* Header */}
         <div className="flex items-start justify-between gap-4 pb-4 border-b border-black/10 dark:border-white/[0.08]">
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-11 h-11 rounded-xl bg-[#0B0C0F] border border-white/15 flex items-center justify-center shrink-0">
-              <img
-                src="/el-dorado-logo.png"
-                alt="El Dorado logo"
-                className="w-7 h-7 object-contain"
-              />
+            <div className="w-11 h-11 rounded-xl bg-[#F7F8FA] dark:bg-[#141418] border border-black/10 dark:border-white/15 flex items-center justify-center shrink-0">
+              <AntigravityMark variant="color" className="w-7 h-7" />
             </div>
             <div className="min-w-0">
               <h2 id="install-modal-title" className="text-lg font-semibold tracking-tight">

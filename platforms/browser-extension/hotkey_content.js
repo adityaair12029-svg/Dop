@@ -120,8 +120,8 @@
         to { opacity: 1; transform: translateY(0) scale(1); }
       }
       @keyframes agOrbPulse {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(47, 113, 227, 0.55); }
-        50% { box-shadow: 0 0 0 9px rgba(47, 113, 227, 0); }
+        0%, 100% { filter: drop-shadow(0 0 4px rgba(47, 113, 227, 0.45)); transform: scale(1); }
+        50% { filter: drop-shadow(0 0 10px rgba(47, 113, 227, 0.85)); transform: scale(1.04); }
       }
       .dope-hud {
         position: fixed;
@@ -151,18 +151,16 @@
       .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
       .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
       .orb {
-        width: 36px; height: 36px; border-radius: 999px;
-        background: #0b0c0f;
-        border: 1.5px solid #2f71e3;
-        animation: agOrbPulse 1.5s ease-in-out infinite;
+        width: 34px; height: 34px;
+        background: transparent;
+        border: 0;
+        animation: agOrbPulse 1.6s ease-in-out infinite;
         flex-shrink: 0;
         display: flex; align-items: center; justify-content: center;
-        overflow: hidden;
       }
-      .orb img {
-        width: 22px;
-        height: 22px;
-        object-fit: contain;
+      .orb svg {
+        width: 30px;
+        height: 30px;
         display: block;
       }
       .title { font-size: 13.5px; font-weight: 600; letter-spacing: -0.02em; color: #ffffff; }
@@ -207,21 +205,39 @@
     brand.className = 'brand';
     const orb = document.createElement('div');
     orb.className = 'orb';
-    const logoImg = document.createElement('img');
-    logoImg.alt = 'El Dorado logo';
-    try {
-      logoImg.src = chrome.runtime.getURL('icons/logo-white.png');
-    } catch {
-      // Fallback handled by onerror
-    }
-    logoImg.onerror = () => {
-      try {
-        logoImg.src = chrome.runtime.getURL('icons/icon128.png');
-      } catch {
-        logoImg.style.display = 'none';
-      }
-    };
-    orb.appendChild(logoImg);
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const markSvg = document.createElementNS(svgNS, 'svg');
+    markSvg.setAttribute('viewBox', '0 0 64 64');
+    markSvg.setAttribute('fill', 'none');
+    markSvg.setAttribute('aria-hidden', 'true');
+    const defs = document.createElementNS(svgNS, 'defs');
+    const grad = document.createElementNS(svgNS, 'linearGradient');
+    grad.setAttribute('id', 'edHudChevronGrad');
+    grad.setAttribute('x1', '8');
+    grad.setAttribute('y1', '54');
+    grad.setAttribute('x2', '56');
+    grad.setAttribute('y2', '10');
+    grad.setAttribute('gradientUnits', 'userSpaceOnUse');
+    [
+      ['0%', '#2F71E3'],
+      ['45%', '#34A853'],
+      ['72%', '#FBBC05'],
+      ['100%', '#EA4335'],
+    ].forEach(([offset, color]) => {
+      const stop = document.createElementNS(svgNS, 'stop');
+      stop.setAttribute('offset', offset);
+      stop.setAttribute('stop-color', color);
+      grad.appendChild(stop);
+    });
+    defs.appendChild(grad);
+    const path = document.createElementNS(svgNS, 'path');
+    path.setAttribute(
+      'd',
+      'M32 9C35.8 9 39.2 13.6 43.2 24.4L51.8 48.2C53 51.6 50.6 54.8 47 54.4C43.8 54 41.2 50.2 38.6 43.6C36.6 38.6 34.4 36.2 32 36.2C29.6 36.2 27.4 38.6 25.4 43.6C22.8 50.2 20.2 54 17 54.4C13.4 54.8 11 51.6 12.2 48.2L20.8 24.4C24.8 13.6 28.2 9 32 9Z'
+    );
+    path.setAttribute('fill', 'url(#edHudChevronGrad)');
+    markSvg.append(defs, path);
+    orb.appendChild(markSvg);
 
     const txtWrap = document.createElement('div');
     const title = document.createElement('div');

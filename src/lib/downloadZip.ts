@@ -138,8 +138,8 @@ async function addExtensionFilesToZip(
     }
   }
 
-  // Always include pure-white cropped emblem for floating orb & HUD
-  const whiteRes = await fetch('/el-dorado-logo.png', { cache: 'no-store' }).catch(() => null);
+  // Always include monochrome A-chevron emblem for popup/HUD fallback
+  const whiteRes = await fetch('/downloads/el-dorado-logo-white.png', { cache: 'no-store' }).catch(() => null);
   if (whiteRes && whiteRes.ok && (whiteRes.headers.get('content-type') || '').includes('image')) {
     const whiteBuf = new Uint8Array(await whiteRes.arrayBuffer());
     if (whiteBuf.length > 0) {

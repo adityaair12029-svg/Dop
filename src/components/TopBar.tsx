@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { LogOut, Mail, Moon, Sun } from 'lucide-react';
 import type { WorkspaceAccount } from '../lib/firebaseAuth';
+import { AntigravityMark } from './AntigravityMark';
 
 export type DopeTab = 'console' | 'commands' | 'devices' | 'platforms' | 'settings';
 
@@ -65,13 +66,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           onClick={() => onSelectTab('console')}
           className="inline-flex items-center gap-2.5 text-[17px] font-semibold tracking-tight text-[#0A0A0C] dark:text-white whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-[#2F71E3] rounded-lg cursor-pointer"
         >
-          <span className="w-7 h-7 rounded-lg bg-[#0B0C0F] border border-black/10 dark:border-white/15 flex items-center justify-center shrink-0">
-            <img
-              src="/el-dorado-logo.png"
-              alt="El Dorado logo"
-              className="w-5 h-5 object-contain"
-            />
-          </span>
+          <AntigravityMark variant="color" className="w-6 h-6 shrink-0" />
           <span>El Dorado</span>
         </button>
 

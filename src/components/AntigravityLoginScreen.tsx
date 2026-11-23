@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Check, Mail, ShieldCheck } from 'lucide-react';
 import { AntigravityFlowWave } from './AntigravityFlowWave';
+import { AntigravityMark } from './AntigravityMark';
 
 interface AntigravityLoginScreenProps {
   busy: boolean;
@@ -47,12 +48,8 @@ export const AntigravityLoginScreen: React.FC<AntigravityLoginScreenProps> = ({
 
       {/* Centered Welcome Stack */}
       <div className="relative z-10 w-full max-w-[400px] flex flex-col items-center ag-flow-enter">
-        <div className="ag-float mb-5 w-14 h-14 rounded-2xl bg-[#0B0C0F]/90 border border-white/10 flex items-center justify-center shadow-[0_10px_30px_rgba(47,113,227,0.22)]">
-          <img
-            src="/el-dorado-logo.png"
-            alt="El Dorado logo"
-            className="w-9 h-9 object-contain"
-          />
+        <div className="ag-float mb-5 text-white">
+          <AntigravityMark variant="monochrome" className="w-10 h-10" />
         </div>
 
         <h1 className="text-[28px] sm:text-[31px] font-normal tracking-[-0.025em] text-center text-white mb-7">
