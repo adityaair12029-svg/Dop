@@ -1,6 +1,21 @@
 {
   "history": [
     {
+      "id": "cmd-234466a8",
+      "timestamp": "2026-11-23T12:22:11.325Z",
+      "raw_input": "Hey Dop, what is 25 * 48?",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "answer_question",
+        "platform": "web",
+        "requires_confirmation": false
+      },
+      "spoken_response": "25 * 48 = 1200.",
+      "status": "executed",
+      "ai_source": "offline_fallback"
+    },
+    {
       "id": "cmd-fb6327d7",
       "timestamp": "2026-11-21T12:59:11.298Z",
       "raw_input": "Hey Dop, what is 25 * 48?",
@@ -337,7 +352,7 @@
   ],
   "pending_pairings": [],
   "settings": {
-    "theme": "light",
+    "theme": "dark",
     "language": "auto",
     "wake_word_enabled": false,
     "wake_word_engine": "openwakeword",

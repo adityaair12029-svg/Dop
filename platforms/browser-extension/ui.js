@@ -12,7 +12,9 @@ const saveServerBtn = document.getElementById('saveServerBtn');
 const settingsToggleBtn = document.getElementById('settingsToggleBtn');
 const settingsBox = document.getElementById('settingsBox');
 const soundToggleBtn = document.getElementById('soundToggleBtn');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
 const langSelect = document.getElementById('langSelect');
+const particlesCanvas = document.getElementById('agParticles');
 
 let recognition = null;
 let isListening = false;
@@ -20,6 +22,89 @@ let wakeMode = false;
 let soundEnabled = true;
 let selectedLang = 'en-IN';
 let currentServerUrl = '';
+let currentTheme = 'dark';
+
+function applyExtensionTheme(theme) {
+  currentTheme = theme === 'light' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  if (themeToggleBtn) {
+    themeToggleBtn.textContent = currentTheme === 'dark' ? 'Dark' : 'Light';
+  }
+}
+
+function initAntigravityParticles() {
+  if (!particlesCanvas) return;
+  const ctx = particlesCanvas.getContext('2d');
+  if (!ctx) return;
+
+  const prefersReduced =
+    typeof window !== 'undefined' &&
+    window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const particles = Array.from({ length: 48 }, (_, idx) => ({
+    angle: ((idx * 137.508) % 360) * (Math.PI / 180),
+    radiusRatio: 0.14 + ((idx * 19) % 100) / 105,
+    speed: 0.0007 + (idx % 6) * 0.0002,
+    drift: (idx % 9) * 0.0004,
+    length: 2.5 + (idx % 3) * 1.2,
+    thickness: 1.6,
+    idx,
+  }));
+
+  const LIGHT_COLORS = ['#2F75C3', '#4285F4', '#6366F1', '#8B5CF6', '#EA4335', '#FBBC05'];
+  const DARK_COLORS = ['#2F71E3', '#60A5FA', '#818CF8', '#A78BFA', '#F87171', '#FBBF24'];
+
+  let width = 380;
+  let height = 560;
+
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    width = Math.max(window.innerWidth, 360);
+    height = Math.max(window.innerHeight, 480);
+    particlesCanvas.width = Math.floor(width * dpr);
+    particlesCanvas.height = Math.floor(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function frame() {
+    ctx.clearRect(0, 0, width, height);
+    const palette = currentTheme === 'dark' ? DARK_COLORS : LIGHT_COLORS;
+    const cx = width * 0.5;
+    const cy = height * 0.3;
+    const maxR = Math.hypot(width, height) * 0.55;
+    const speedMult = isListening ? 2.2 : 1;
+
+    for (const p of particles) {
+      if (!prefersReduced) {
+        p.radiusRatio += p.speed * speedMult;
+        p.angle += p.drift * 0.35;
+        if (p.radiusRatio > 1.06) p.radiusRatio = 0.12;
+      }
+      const r = p.radiusRatio * maxR;
+      const x = cx + Math.cos(p.angle) * r;
+      const y = cy + Math.sin(p.angle) * r * 0.82;
+      const edgeFade = p.radiusRatio < 0.2 ? (p.radiusRatio - 0.1) / 0.1 : 1;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(p.angle);
+      ctx.globalAlpha = Math.max(0, Math.min(1, (currentTheme === 'dark' ? 0.32 : 0.45) * edgeFade));
+      ctx.fillStyle = palette[p.idx % palette.length];
+      ctx.beginPath();
+      ctx.roundRect(-p.length * 0.5, -p.thickness * 0.5, p.length, p.thickness, p.thickness * 0.5);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    if (!prefersReduced) {
+      requestAnimationFrame(frame);
+    }
+  }
+  frame();
+}
 
 function playToneSequence(notes) {
   if (!soundEnabled) return;
@@ -189,7 +274,7 @@ function stopListening() {
   wakeBtn.classList.remove('active');
   wakeBtn.textContent = 'Hey Dop Mode';
   statusEl.textContent = 'Hey Dop is ready';
-  subEl.textContent = 'Press Alt + D or tap the orb to speak.';
+  subEl.textContent = 'Press Alt + D + T or tap the orb to speak.';
 }
 
 function startListening(useWakeWord) {
@@ -300,6 +385,18 @@ soundToggleBtn.addEventListener('click', () => {
   if (soundEnabled) playActivateSound();
 });
 
+if (themeToggleBtn) {
+  themeToggleBtn.addEventListener('click', () => {
+    const next = currentTheme === 'dark' ? 'light' : 'dark';
+    applyExtensionTheme(next);
+    try {
+      chrome.storage?.local?.set({ dopeTheme: next });
+    } catch {
+      // Ignore storage error
+    }
+  });
+}
+
 langSelect.addEventListener('change', () => {
   selectedLang = langSelect.value;
   chrome.runtime.sendMessage({ type: 'save_prefs', lang: selectedLang });
@@ -362,12 +459,21 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-// Auto-activate when background.js triggers Alt+D command
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg?.type === 'dope_activate_now') {
     startListening(false);
   }
 });
+
+try {
+  chrome.storage?.local?.get(['dopeTheme'], (data) => {
+    if (data?.dopeTheme) applyExtensionTheme(data.dopeTheme);
+  });
+} catch {
+  // Ignore
+}
+
+initAntigravityParticles();
 
 chrome.runtime.sendMessage({ type: 'get_status' }, (res) => {
   if (res) {

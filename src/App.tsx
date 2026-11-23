@@ -1,9 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import type { User } from 'firebase/auth';
 import type { ActionName, CustomAlias, DopeAction, DopePlatform } from './shared/actions';
-import { getAccessToken, googleSignIn, initAuth, logoutGoogle } from './lib/firebaseAuth';
+import {
+  continueWithAntigravityProfile,
+  formatGoogleAuthError,
+  getAccessToken,
+  googleSignIn,
+  initAuth,
+  logoutGoogle,
+  type WorkspaceAccount,
+} from './lib/firebaseAuth';
 import { TopBar, type DopeTab } from './components/TopBar';
 import { ConfirmationDialog } from './components/ConfirmationDialog';
+import { GoogleSignInModal } from './components/GoogleSignInModal';
 import { VoiceConsole, type GmailMessageItem, type HistoryRecord } from './components/VoiceConsole';
 import { CommandLibrary } from './components/CommandLibrary';
 import {
@@ -15,7 +23,7 @@ import { PlatformStudio } from './components/PlatformStudio';
 import { SettingsPanel, type AssistantSettingsState } from './components/SettingsPanel';
 
 const DEFAULT_SETTINGS: AssistantSettingsState = {
-  theme: 'light',
+  theme: 'dark',
   language: 'auto',
   wake_word_enabled: false,
   wake_word_engine: 'openwakeword',
@@ -27,9 +35,11 @@ const DEFAULT_SETTINGS: AssistantSettingsState = {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<DopeTab>('console');
-  const [user, setUser] = useState<User | null>(null);
+  const [account, setAccount] = useState<WorkspaceAccount | null>(null);
   const [gmailToken, setGmailToken] = useState<string | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [signInModalOpen, setSignInModalOpen] = useState(false);
+  const [signInError, setSignInError] = useState<string | null>(null);
   const [authBanner, setAuthBanner] = useState<string | null>(null);
 
   const [settings, setSettings] = useState<AssistantSettingsState>(DEFAULT_SETTINGS);
@@ -101,12 +111,13 @@ export default function App() {
   useEffect(() => {
     void loadWorkspaceData();
     const unsubscribe = initAuth(
-      (u, token) => {
-        setUser(u);
-        setGmailToken(token ?? getAccessToken());
+      (acc, token) => {
+        setAccount(acc);
+        const resolvedToken = token ?? getAccessToken();
+        setGmailToken(resolvedToken);
       },
       () => {
-        setUser(null);
+        setAccount(null);
         setGmailToken(null);
         setGmailMessages([]);
       }
@@ -114,52 +125,63 @@ export default function App() {
     return () => unsubscribe();
   }, [loadWorkspaceData]);
 
-  const fetchGmailInbox = useCallback(async (explicitToken?: string) => {
-    const token = explicitToken ?? gmailToken ?? getAccessToken();
-    if (!token) return;
-    setGmailLoading(true);
-    setGmailError(null);
-    try {
-      const res = await fetch('/api/dope/gmail/messages', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = (await res.json()) as { messages?: GmailMessageItem[]; error?: string };
-      if (!res.ok) {
-        setGmailError(data.error || 'Could not load Gmail messages.');
-      } else {
-        setGmailMessages(data.messages ?? []);
+  const fetchGmailInbox = useCallback(
+    async (explicitToken?: string) => {
+      const token = explicitToken ?? gmailToken ?? getAccessToken();
+      if (!token) return;
+      setGmailLoading(true);
+      setGmailError(null);
+      try {
+        const res = await fetch('/api/dope/gmail/messages', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = (await res.json()) as { messages?: GmailMessageItem[]; error?: string };
+        if (!res.ok) {
+          setGmailError(data.error || 'Could not load Gmail messages.');
+        } else {
+          setGmailMessages(data.messages ?? []);
+        }
+      } catch (err: unknown) {
+        setGmailError(err instanceof Error ? err.message : 'Network error reading Gmail.');
+      } finally {
+        setGmailLoading(false);
       }
-    } catch (err: unknown) {
-      setGmailError(err instanceof Error ? err.message : 'Network error reading Gmail.');
-    } finally {
-      setGmailLoading(false);
-    }
-  }, [gmailToken]);
+    },
+    [gmailToken]
+  );
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = async (includeGmailScopes: boolean) => {
     setIsSigningIn(true);
+    setSignInError(null);
     setAuthBanner(null);
     try {
-      const res = await googleSignIn();
-      if (res) {
-        setUser(res.user);
-        setGmailToken(res.accessToken);
+      const res = await googleSignIn({ includeGmailScopes });
+      setAccount(res.account);
+      setGmailToken(res.accessToken);
+      setSignInModalOpen(false);
+      if (res.accessToken) {
         await fetchGmailInbox(res.accessToken);
       }
     } catch (err: unknown) {
-      setAuthBanner(
-        err instanceof Error
-          ? err.message
-          : 'Google sign-in popup was closed or blocked by the browser.'
-      );
+      const message = formatGoogleAuthError(err);
+      setSignInError(message);
     } finally {
       setIsSigningIn(false);
     }
   };
 
+  const handleWorkspaceSignIn = (name: string, email: string) => {
+    const profile = continueWithAntigravityProfile(name, email);
+    setAccount(profile);
+    setGmailToken(null);
+    setSignInError(null);
+    setAuthBanner(null);
+    setSignInModalOpen(false);
+  };
+
   const handleGoogleSignOut = async () => {
     await logoutGoogle();
-    setUser(null);
+    setAccount(null);
     setGmailToken(null);
     setGmailMessages([]);
   };
@@ -250,28 +272,38 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen bg-white dark:bg-[#070708] text-[#0A0A0C] dark:text-white transition-colors duration-200">
       <TopBar
         activeTab={activeTab}
         onSelectTab={setActiveTab}
-        user={user}
+        account={account}
         hasGmailToken={Boolean(gmailToken)}
-        isSigningIn={isSigningIn}
-        onGoogleSignIn={() => void handleGoogleSignIn()}
+        theme={settings.theme}
+        onToggleTheme={() =>
+          void handleUpdateSettings({ theme: settings.theme === 'dark' ? 'light' : 'dark' })
+        }
+        onOpenSignIn={() => {
+          setSignInError(null);
+          setSignInModalOpen(true);
+        }}
+        onConnectGmail={() => {
+          setSignInError(null);
+          setSignInModalOpen(true);
+        }}
         onGoogleSignOut={() => void handleGoogleSignOut()}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {authBanner && (
           <div
             role="status"
-            className="mb-6 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 px-4 py-3 text-xs text-amber-900 dark:text-amber-200 flex items-center justify-between gap-4"
+            className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-800 dark:text-amber-200 flex items-center justify-between gap-4"
           >
             <span>{authBanner}</span>
             <button
               type="button"
               onClick={() => setAuthBanner(null)}
-              className="font-semibold underline shrink-0"
+              className="font-semibold underline shrink-0 cursor-pointer"
             >
               Dismiss
             </button>
@@ -280,6 +312,11 @@ export default function App() {
 
         {activeTab === 'console' && (
           <VoiceConsole
+            theme={settings.theme}
+            onToggleTheme={() =>
+              void handleUpdateSettings({ theme: settings.theme === 'dark' ? 'light' : 'dark' })
+            }
+            userName={account?.displayName ?? 'Doptails'}
             language={settings.language}
             onChangeLanguage={(lang) => void handleUpdateSettings({ language: lang })}
             voiceFeedbackEnabled={settings.voice_feedback_enabled}
@@ -294,7 +331,10 @@ export default function App() {
             gmailLoading={gmailLoading}
             gmailError={gmailError}
             onFetchGmail={() => void fetchGmailInbox()}
-            onRequestGoogleSignIn={() => void handleGoogleSignIn()}
+            onRequestGoogleSignIn={() => {
+              setSignInError(null);
+              setSignInModalOpen(true);
+            }}
             onSubmitCommand={handleSubmitCommand}
             onOpenExtensionStudio={() => setActiveTab('platforms')}
           />
@@ -375,6 +415,15 @@ export default function App() {
           />
         )}
       </main>
+
+      <GoogleSignInModal
+        open={signInModalOpen}
+        busy={isSigningIn}
+        errorMessage={signInError}
+        onClose={() => setSignInModalOpen(false)}
+        onGoogleLogin={(includeGmail) => handleGoogleSignIn(includeGmail)}
+        onWorkspaceLogin={handleWorkspaceSignIn}
+      />
 
       <ConfirmationDialog
         pending={pendingConfirmation}

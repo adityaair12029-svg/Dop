@@ -1,15 +1,19 @@
-import React from 'react';
-import type { User } from 'firebase/auth';
+import React, { useEffect, useRef, useState } from 'react';
+import { LogOut, Mail, Moon, Sun } from 'lucide-react';
+import type { WorkspaceAccount } from '../lib/firebaseAuth';
+import { AntigravityMark } from './AntigravityMark';
 
 export type DopeTab = 'console' | 'commands' | 'devices' | 'platforms' | 'settings';
 
 interface TopBarProps {
   activeTab: DopeTab;
   onSelectTab: (tab: DopeTab) => void;
-  user: User | null;
+  account: WorkspaceAccount | null;
   hasGmailToken: boolean;
-  isSigningIn: boolean;
-  onGoogleSignIn: () => void;
+  theme: 'light' | 'dark';
+  onToggleTheme: () => void;
+  onOpenSignIn: () => void;
+  onConnectGmail: () => void;
   onGoogleSignOut: () => void;
 }
 
@@ -24,43 +28,145 @@ const NAV_ITEMS: Array<{ id: DopeTab; label: string }> = [
 export const TopBar: React.FC<TopBarProps> = ({
   activeTab,
   onSelectTab,
-  user,
+  account,
   hasGmailToken,
-  isSigningIn,
-  onGoogleSignIn,
+  theme,
+  onToggleTheme,
+  onOpenSignIn,
+  onConnectGmail,
   onGoogleSignOut,
 }) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [menuOpen]);
+
+  const initials = (account?.displayName || account?.email || 'D')
+    .trim()
+    .charAt(0)
+    .toUpperCase();
+
   return (
-    <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+    <header className="sticky top-0 z-40 border-b border-black/10 dark:border-white/[0.08] bg-white/85 dark:bg-[#070708]/85 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 md:py-0 md:h-16 flex flex-wrap md:flex-nowrap items-center justify-between gap-x-8 gap-y-2">
-        {/* Zone 1: Brand wordmark only */}
+        {/* Zone 1: Single-line Antigravity brand mark + DOPE wordmark */}
         <button
           type="button"
           onClick={() => onSelectTab('console')}
-          className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-blue-600 rounded"
+          className="inline-flex items-center gap-2.5 text-[17px] font-semibold tracking-tight text-[#0A0A0C] dark:text-white whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-[#2F71E3] rounded-lg cursor-pointer"
         >
-          DOPE
+          <AntigravityMark variant="color" className="w-6 h-6 shrink-0" />
+          <span>DOPE</span>
         </button>
 
-        {/* Zone 3 (ordered before nav on mobile via order-2 md:order-3 so brand + CTA share top row) */}
-        <div className="shrink-0 order-2 md:order-3">
-          {user && hasGmailToken ? (
-            <button
-              type="button"
-              onClick={onGoogleSignOut}
-              className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors whitespace-nowrap shrink-0"
-              title={`Signed in as ${user.email ?? 'Google User'}`}
-            >
-              Sign out
-            </button>
+        {/* Zone 3: Single primary action / signed-in account popover */}
+        <div className="shrink-0 order-2 md:order-3 relative" ref={menuRef}>
+          {account ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setMenuOpen((o) => !o)}
+                aria-expanded={menuOpen}
+                aria-label="Open account menu"
+                className="inline-flex items-center gap-2 rounded-full border border-black/10 dark:border-white/15 bg-[#F7F8FA] dark:bg-[#141418] px-3 py-1.5 text-xs font-medium text-[#0A0A0C] dark:text-white hover:border-[#2F71E3] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                {account.photoURL ? (
+                  <img
+                    src={account.photoURL}
+                    alt={account.displayName}
+                    referrerPolicy="no-referrer"
+                    className="w-5 h-5 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="w-5 h-5 rounded-full bg-[#2F71E3] text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
+                    {initials}
+                  </span>
+                )}
+                <span className="max-w-[120px] truncate">{account.displayName}</span>
+              </button>
+
+              {menuOpen && (
+                <div className="ag-animate-in absolute right-0 mt-2 w-64 rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#0D0D10] p-3 shadow-2xl z-50">
+                  <div className="px-2 py-1.5 border-b border-black/10 dark:border-white/10">
+                    <div className="text-sm font-semibold text-[#0A0A0C] dark:text-white truncate">
+                      {account.displayName}
+                    </div>
+                    <div className="text-xs text-[#5F6368] dark:text-neutral-400 truncate">
+                      {account.email}
+                    </div>
+                    <div className="text-[11px] text-[#2F75C3] dark:text-[#60A5FA] mt-1">
+                      {account.provider === 'antigravity_workspace'
+                        ? 'Antigravity Workspace Profile'
+                        : hasGmailToken
+                          ? 'Google Account · Gmail Connected'
+                          : 'Google Account Connected'}
+                    </div>
+                  </div>
+
+                  <div className="mt-2 space-y-1">
+                    {!hasGmailToken && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          onConnectGmail();
+                        }}
+                        className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium rounded-xl text-[#0A0A0C] dark:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                      >
+                        <Mail className="w-3.5 h-3.5 text-[#2F71E3]" />
+                        <span>Connect Gmail Permissions</span>
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onToggleTheme();
+                        setMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium rounded-xl text-[#0A0A0C] dark:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                    >
+                      {theme === 'dark' ? (
+                        <Sun className="w-3.5 h-3.5 text-[#FBBC05]" />
+                      ) : (
+                        <Moon className="w-3.5 h-3.5 text-[#2F75C3]" />
+                      )}
+                      <span>
+                        {theme === 'dark' ? 'Switch to Default Light' : 'Switch to Default Dark'}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onGoogleSignOut();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Sign out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <button
               type="button"
-              disabled={isSigningIn}
-              onClick={onGoogleSignIn}
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap shrink-0 disabled:opacity-60"
+              onClick={onOpenSignIn}
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-full bg-[#0A0A0C] text-white dark:bg-white dark:text-[#070708] hover:opacity-90 transition-opacity whitespace-nowrap shrink-0 cursor-pointer"
             >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 48 48" aria-hidden="true">
+              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 48 48" aria-hidden="true">
                 <path
                   fill="#EA4335"
                   d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
@@ -78,15 +184,15 @@ export const TopBar: React.FC<TopBarProps> = ({
                   d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
                 />
               </svg>
-              <span>{isSigningIn ? 'Signing in...' : 'Sign in with Google'}</span>
+              <span>Sign in with Google</span>
             </button>
           )}
         </div>
 
-        {/* Zone 2: 5 concise single-line nav links */}
+        {/* Zone 2: 5 concise single-line text nav links */}
         <nav
           aria-label="Primary navigation"
-          className="order-3 md:order-2 w-full md:w-auto flex items-center justify-between md:justify-center gap-3 sm:gap-6 pt-1 md:pt-0 border-t md:border-t-0 border-slate-200 dark:border-slate-800"
+          className="order-3 md:order-2 w-full md:w-auto flex items-center justify-between md:justify-center gap-3 sm:gap-7 pt-1 md:pt-0 border-t md:border-t-0 border-black/10 dark:border-white/[0.08]"
         >
           {NAV_ITEMS.map((item) => {
             const active = activeTab === item.id;
@@ -95,10 +201,10 @@ export const TopBar: React.FC<TopBarProps> = ({
                 key={item.id}
                 type="button"
                 onClick={() => onSelectTab(item.id)}
-                className={`text-xs sm:text-sm font-medium whitespace-nowrap shrink-0 py-1.5 border-b-2 transition-colors focus-visible:outline-2 focus-visible:outline-blue-600 ${
+                className={`text-xs sm:text-[13px] font-medium whitespace-nowrap shrink-0 py-1.5 border-b-2 transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2F71E3] ${
                   active
-                    ? 'border-blue-600 text-slate-900 dark:text-white'
-                    : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                    ? 'border-[#2F75C3] dark:border-[#2F71E3] text-[#0A0A0C] dark:text-white'
+                    : 'border-transparent text-[#5F6368] dark:text-neutral-400 hover:text-[#0A0A0C] dark:hover:text-white'
                 }`}
               >
                 {item.label}

@@ -152,25 +152,25 @@ export const PlatformStudio: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+    <div className="space-y-6 ag-animate-in">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-black/10 dark:border-white/[0.08] pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          <h1 className="text-2xl font-semibold tracking-tight text-[#0A0A0C] dark:text-white">
             Chrome Extension Studio &amp; Platform Guides
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-            Upload your custom DOPE logo, download the standalone Chrome &amp; Edge Extension (.zip), and inspect all native adapters.
+          <p className="text-sm text-[#5F6368] dark:text-neutral-400 mt-0.5">
+            Upload your custom DOPE logo, download the Antigravity-themed Chrome Extension (.zip), and inspect all native adapters.
           </p>
         </div>
 
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-1 p-1 rounded-full bg-[#F7F8FA] dark:bg-[#0D0D10] border border-black/10 dark:border-white/[0.08]">
           <button
             type="button"
             onClick={() => setMode('guides')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded-full transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
               mode === 'guides'
-                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400'
+                ? 'bg-[#0A0A0C] text-white dark:bg-white dark:text-[#070708]'
+                : 'text-[#5F6368] dark:text-neutral-400'
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
@@ -179,10 +179,10 @@ export const PlatformStudio: React.FC = () => {
           <button
             type="button"
             onClick={() => setMode('source')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded-full transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
               mode === 'source'
-                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400'
+                ? 'bg-[#0A0A0C] text-white dark:bg-white dark:text-[#070708]'
+                : 'text-[#5F6368] dark:text-neutral-400'
             }`}
           >
             <Code2 className="w-3.5 h-3.5" />
@@ -192,10 +192,10 @@ export const PlatformStudio: React.FC = () => {
       </div>
 
       {/* Standalone Chrome/Edge Extension Builder & Custom Logo Uploader */}
-      <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+      <section className="rounded-2xl border border-black/10 dark:border-white/[0.08] bg-[#F7F8FA] dark:bg-[#0D0D10] p-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 flex items-center justify-center overflow-hidden shrink-0">
+            <div className="w-16 h-16 rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#070708] flex items-center justify-center overflow-hidden shrink-0">
               {!iconLoadError ? (
                 <img
                   src={`/api/dope/extension/icon.png?v=${iconVersion}`}
@@ -204,28 +204,24 @@ export const PlatformStudio: React.FC = () => {
                   onError={() => setIconLoadError(true)}
                 />
               ) : (
-                <Puzzle className="w-7 h-7 text-blue-600" />
+                <Puzzle className="w-7 h-7 text-[#2F71E3]" />
               )}
             </div>
             <div>
-              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                DOPE Chrome &amp; Edge Extension (Pi-Style Side Panel + Voice)
+              <h2 className="text-base font-semibold text-[#0A0A0C] dark:text-white">
+                DOPE Chrome &amp; Edge Extension (Antigravity Theme v1.4)
               </h2>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
-                Pi-style conversational voice extension for Chrome &amp; Edge tabs. Press{' '}
-                <kbd className="font-mono px-1 py-0.5 rounded border border-slate-300 dark:border-slate-700">
+              <p className="text-xs text-[#5F6368] dark:text-neutral-400 mt-1 max-w-2xl leading-relaxed">
+                Full Antigravity obsidian &amp; light theme inside popup, side panel, and on-page{' '}
+                <kbd className="font-mono px-1.5 py-0.5 rounded border border-black/10 dark:border-white/15 text-[#0A0A0C] dark:text-white">
                   Alt+D+T
                 </kbd>{' '}
-                (or{' '}
-                <kbd className="font-mono px-1 py-0.5 rounded border border-slate-300 dark:border-slate-700">
-                  Alt+D
-                </kbd>
-                ) on any browser tab to activate DOPE with sweet bell chimes — ask any AI question, open YouTube/sites, switch/mute/close tabs, scroll, zoom, and minimize Chrome windows.
+                floating command HUD — with radial particles, sweet bell chimes, and Gemini AI Q&amp;A.
               </p>
-              <ol className="mt-3 text-xs text-slate-600 dark:text-slate-300 space-y-1 list-decimal list-inside">
+              <ol className="mt-3 text-xs text-[#5F6368] dark:text-neutral-300 space-y-1 list-decimal list-inside">
                 <li>Optional: upload your own PNG/JPG/SVG logo below to bundle it into the extension.</li>
                 <li>
-                  Click <strong>Download Chrome Extension (.zip)</strong>, then <strong>Right-click &rarr; Extract All</strong> into a folder (do NOT drag the raw <code>.zip</code> file onto Chrome — Chrome rejects unextracted <code>.zip</code> files).
+                  Click <strong>Download Chrome Extension (.zip)</strong>, then <strong>Right-click &rarr; Extract All</strong> into a folder.
                 </li>
                 <li>
                   Open <code className="font-mono">chrome://extensions</code>, turn ON <strong>Developer mode</strong>, click <strong>Load unpacked</strong>, and select the extracted folder containing <code className="font-mono">manifest.json</code>.
@@ -235,7 +231,7 @@ export const PlatformStudio: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <label className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap shrink-0">
+            <label className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-medium rounded-full border border-black/15 dark:border-white/15 bg-white dark:bg-[#070708] text-[#0A0A0C] dark:text-white hover:border-[#2F71E3] cursor-pointer whitespace-nowrap shrink-0">
               <Upload className="w-4 h-4" />
               <span>{logoUploading ? 'Saving Logo...' : 'Upload Custom Logo'}</span>
               <input
@@ -272,7 +268,7 @@ export const PlatformStudio: React.FC = () => {
                   setDownloadingExt(false);
                 }
               }}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 transition-colors whitespace-nowrap shrink-0"
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-medium rounded-full bg-[#2F75C3] dark:bg-[#2F71E3] text-white hover:opacity-90 disabled:opacity-60 transition-opacity whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Download className="w-4 h-4" />
               <span>{downloadingExt ? 'Building Verified ZIP...' : 'Download Chrome Extension (.zip)'}</span>
@@ -283,10 +279,10 @@ export const PlatformStudio: React.FC = () => {
         {logoStatus && (
           <div
             role="status"
-            className={`mt-4 rounded-lg border px-3.5 py-2.5 text-xs ${
+            className={`mt-4 rounded-xl border px-3.5 py-2.5 text-xs ${
               logoStatus.ok
-                ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200'
-                : 'border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/30 text-rose-900 dark:text-rose-200'
+                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                : 'border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300'
             }`}
           >
             {logoStatus.text}
@@ -295,24 +291,24 @@ export const PlatformStudio: React.FC = () => {
       </section>
 
       {/* Whole-Laptop Desktop Assistant Card (Home Screen + Every App) */}
-      <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+      <section className="rounded-2xl border border-black/10 dark:border-white/[0.08] bg-[#F7F8FA] dark:bg-[#0D0D10] p-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-900 dark:bg-slate-950 flex items-center justify-center shrink-0">
-              <Laptop className="w-8 h-8 text-blue-400" />
+            <div className="w-16 h-16 rounded-2xl border border-black/10 dark:border-white/10 bg-[#070708] flex items-center justify-center shrink-0">
+              <Laptop className="w-8 h-8 text-[#2F71E3]" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+              <h2 className="text-base font-semibold text-[#0A0A0C] dark:text-white">
                 DOPE Universal Laptop + Chrome Bundle (Home Screen &amp; All Apps)
               </h2>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
-                Includes <strong>both</strong> the updated Chrome Extension v1.3 (<code className="font-mono">manifest.json</code>) <strong>and</strong> the Windows/Mac/Linux Python Desktop Companion (<code className="font-mono">dope_companion.py</code>). Press{' '}
-                <kbd className="font-mono px-1 py-0.5 rounded border border-slate-300 dark:border-slate-700">
+              <p className="text-xs text-[#5F6368] dark:text-neutral-400 mt-1 max-w-2xl leading-relaxed">
+                Includes <strong>both</strong> the Antigravity Chrome Extension v1.4 (<code className="font-mono">manifest.json</code>) <strong>and</strong> the Windows/Mac/Linux Python Desktop Companion (<code className="font-mono">dope_companion.py</code>). Press{' '}
+                <kbd className="font-mono px-1.5 py-0.5 rounded border border-black/10 dark:border-white/15 text-[#0A0A0C] dark:text-white">
                   Alt+D+T
                 </kbd>{' '}
-                in Chrome tabs AND on your Windows Desktop Home Screen / File Explorer / VS Code!
+                in Chrome tabs AND on your Windows Desktop Home Screen!
               </p>
-              <ol className="mt-3 text-xs text-slate-600 dark:text-slate-300 space-y-1 list-decimal list-inside">
+              <ol className="mt-3 text-xs text-[#5F6368] dark:text-neutral-300 space-y-1 list-decimal list-inside">
                 <li>
                   Click <strong>Download Desktop Assistant (.zip)</strong> and extract it (Right-click &rarr; <strong>Extract All</strong>).
                 </li>
@@ -320,7 +316,7 @@ export const PlatformStudio: React.FC = () => {
                   In Chrome: <code className="font-mono">chrome://extensions</code> &rarr; <strong>Load unpacked</strong> &rarr; select the extracted folder.
                 </li>
                 <li>
-                  For Windows Home Screen &amp; outside Chrome: run <code className="font-mono">python dope_companion.py</code> in that folder and press <kbd className="font-mono px-1 py-0.5 rounded border border-slate-300 dark:border-slate-700">Alt+D+T</kbd> anywhere!
+                  For Windows Home Screen &amp; outside Chrome: run <code className="font-mono">python dope_companion.py</code> in that folder and press <kbd className="font-mono px-1.5 py-0.5 rounded border border-black/10 dark:border-white/15">Alt+D+T</kbd> anywhere!
                 </li>
               </ol>
             </div>
@@ -338,9 +334,9 @@ export const PlatformStudio: React.FC = () => {
                   // Ignore clipboard restrictions
                 }
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap shrink-0"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium rounded-full border border-black/15 dark:border-white/15 bg-white dark:bg-[#070708] text-[#0A0A0C] dark:text-white hover:border-[#2F71E3] whitespace-nowrap shrink-0 cursor-pointer"
             >
-              {copiedCmd ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedCmd ? <Check className="w-3.5 h-3.5 text-[#2F71E3]" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copiedCmd ? 'Copied Command' : 'Copy Run Command'}</span>
             </button>
             <button
@@ -364,7 +360,7 @@ export const PlatformStudio: React.FC = () => {
                   setDownloadingDesk(false);
                 }
               }}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:opacity-90 disabled:opacity-60 transition-colors whitespace-nowrap shrink-0"
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-medium rounded-full bg-[#0A0A0C] text-white dark:bg-white dark:text-[#070708] hover:opacity-90 disabled:opacity-60 transition-opacity whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Download className="w-4 h-4" />
               <span>{downloadingDesk ? 'Building Verified ZIP...' : 'Download Desktop Assistant (.zip)'}</span>
@@ -375,10 +371,10 @@ export const PlatformStudio: React.FC = () => {
         {desktopStatus && (
           <div
             role="status"
-            className={`mt-4 rounded-lg border px-3.5 py-2.5 text-xs ${
+            className={`mt-4 rounded-xl border px-3.5 py-2.5 text-xs ${
               desktopStatus.ok
-                ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200'
-                : 'border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/30 text-rose-900 dark:text-rose-200'
+                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                : 'border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300'
             }`}
           >
             {desktopStatus.text}
@@ -388,8 +384,8 @@ export const PlatformStudio: React.FC = () => {
 
       {mode === 'guides' ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          <aside className="lg:col-span-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3">
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2 py-1.5">
+          <aside className="lg:col-span-4 rounded-2xl border border-black/10 dark:border-white/[0.08] bg-[#F7F8FA] dark:bg-[#0D0D10] p-3">
+            <div className="text-xs font-semibold text-[#5F6368] dark:text-neutral-400 px-2 py-1.5">
               Documentation ({docs.length} files)
             </div>
             <div className="mt-1 space-y-0.5">
@@ -400,10 +396,10 @@ export const PlatformStudio: React.FC = () => {
                     key={doc.name}
                     type="button"
                     onClick={() => setSelectedDocName(doc.name)}
-                    className={`w-full text-left px-3 py-2 text-xs rounded-lg transition-colors ${
+                    className={`w-full text-left px-3 py-2 text-xs rounded-xl transition-colors cursor-pointer ${
                       active
-                        ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-semibold'
-                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                        ? 'bg-[#2F75C3]/15 dark:bg-[#2F71E3]/20 text-[#2F75C3] dark:text-[#93C5FD] font-semibold'
+                        : 'text-[#5F6368] dark:text-neutral-300 hover:bg-black/5 dark:hover:bg-white/5'
                     }`}
                   >
                     {doc.title}
@@ -413,28 +409,28 @@ export const PlatformStudio: React.FC = () => {
             </div>
           </aside>
 
-          <article className="lg:col-span-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+          <article className="lg:col-span-8 rounded-2xl border border-black/10 dark:border-white/[0.08] bg-[#F7F8FA] dark:bg-[#0D0D10] p-6">
             {currentDoc ? (
               <>
-                <div className="flex items-center justify-between gap-4 pb-3 border-b border-slate-200 dark:border-slate-800">
-                  <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                <div className="flex items-center justify-between gap-4 pb-3 border-b border-black/10 dark:border-white/[0.08]">
+                  <h2 className="text-base font-semibold text-[#0A0A0C] dark:text-white">
                     {currentDoc.name}
                   </h2>
                   <button
                     type="button"
                     onClick={() => void handleCopy(currentDoc.content)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded-full border border-black/15 dark:border-white/15 text-[#0A0A0C] dark:text-white hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
                   >
                     {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copied ? 'Copied' : 'Copy Markdown'}</span>
                   </button>
                 </div>
-                <pre className="mt-4 whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-800 dark:text-slate-200">
+                <pre className="mt-4 whitespace-pre-wrap font-sans text-sm leading-relaxed text-[#0A0A0C] dark:text-neutral-200">
                   {currentDoc.content}
                 </pre>
               </>
             ) : (
-              <p className="text-sm text-slate-500 dark:text-slate-400">Loading guides...</p>
+              <p className="text-sm text-[#5F6368] dark:text-neutral-400">Loading guides...</p>
             )}
           </article>
         </div>
@@ -455,10 +451,10 @@ export const PlatformStudio: React.FC = () => {
                   const first = platformFiles.find((f) => f.platform === p.id);
                   if (first) setSelectedFilePath(first.path);
                 }}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
+                className={`px-3.5 py-1.5 text-xs font-medium rounded-full transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                   selectedPlatform === p.id
-                    ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900'
-                    : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+                    ? 'bg-[#0A0A0C] text-white dark:bg-white dark:text-[#070708]'
+                    : 'bg-[#F7F8FA] dark:bg-[#0D0D10] border border-black/10 dark:border-white/[0.08] text-[#5F6368] dark:text-neutral-300'
                 }`}
               >
                 {p.label}
@@ -467,8 +463,8 @@ export const PlatformStudio: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            <aside className="lg:col-span-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3">
-              <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2 py-1.5">
+            <aside className="lg:col-span-4 rounded-2xl border border-black/10 dark:border-white/[0.08] bg-[#F7F8FA] dark:bg-[#0D0D10] p-3">
+              <div className="text-xs font-semibold text-[#5F6368] dark:text-neutral-400 px-2 py-1.5">
                 Module Files
               </div>
               <div className="mt-1 space-y-0.5">
@@ -479,10 +475,10 @@ export const PlatformStudio: React.FC = () => {
                       key={file.path}
                       type="button"
                       onClick={() => setSelectedFilePath(file.path)}
-                      className={`w-full text-left px-3 py-2 text-xs font-mono rounded-lg transition-colors truncate ${
+                      className={`w-full text-left px-3 py-2 text-xs font-mono rounded-xl transition-colors truncate cursor-pointer ${
                         active
-                          ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-semibold'
-                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          ? 'bg-[#2F75C3]/15 dark:bg-[#2F71E3]/20 text-[#2F75C3] dark:text-[#93C5FD] font-semibold'
+                          : 'text-[#5F6368] dark:text-neutral-300 hover:bg-black/5 dark:hover:bg-white/5'
                       }`}
                     >
                       {file.path.replace(`platforms/${selectedPlatform}/`, '')}
@@ -492,28 +488,28 @@ export const PlatformStudio: React.FC = () => {
               </div>
             </aside>
 
-            <div className="lg:col-span-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+            <div className="lg:col-span-8 rounded-2xl border border-black/10 dark:border-white/[0.08] bg-[#F7F8FA] dark:bg-[#0D0D10] p-5">
               {currentFile ? (
                 <>
-                  <div className="flex items-center justify-between gap-4 pb-3 border-b border-slate-200 dark:border-slate-800">
-                    <code className="text-xs font-mono text-slate-700 dark:text-slate-300">
+                  <div className="flex items-center justify-between gap-4 pb-3 border-b border-black/10 dark:border-white/[0.08]">
+                    <code className="text-xs font-mono text-[#5F6368] dark:text-neutral-300">
                       {currentFile.path}
                     </code>
                     <button
                       type="button"
                       onClick={() => void handleCopy(currentFile.content)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded-full border border-black/15 dark:border-white/15 text-[#0A0A0C] dark:text-white hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
                     >
                       {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{copied ? 'Copied' : 'Copy Code'}</span>
                     </button>
                   </div>
-                  <pre className="mt-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-mono text-slate-800 dark:text-slate-200 overflow-x-auto max-h-[540px]">
+                  <pre className="mt-4 p-4 rounded-xl bg-white dark:bg-[#070708] border border-black/10 dark:border-white/[0.08] text-xs font-mono text-[#0A0A0C] dark:text-neutral-200 overflow-x-auto max-h-[540px]">
                     {currentFile.content}
                   </pre>
                 </>
               ) : (
-                <p className="text-sm text-slate-500 dark:text-slate-400">Loading source files...</p>
+                <p className="text-sm text-[#5F6368] dark:text-neutral-400">Loading source files...</p>
               )}
             </div>
           </div>

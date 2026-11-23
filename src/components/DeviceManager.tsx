@@ -95,22 +95,22 @@ export const DeviceManager: React.FC<DeviceManagerProps> = ({
   const qrMatrix = activePairing ? renderPairingMatrix(activePairing.code) : null;
 
   return (
-    <div className="space-y-8">
-      <div className="border-b border-slate-200 dark:border-slate-800 pb-4">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+    <div className="space-y-8 ag-animate-in">
+      <div className="border-b border-black/10 dark:border-white/[0.08] pb-4">
+        <h1 className="text-2xl font-semibold tracking-tight text-[#0A0A0C] dark:text-white">
           Connected Devices &amp; Secure Pairing
         </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+        <p className="text-sm text-[#5F6368] dark:text-neutral-400 mt-0.5">
           Unpaired devices cannot control your computer. Approve or revoke any session at any time.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Pair New Device */}
-        <section className="lg:col-span-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+        <section className="lg:col-span-5 rounded-2xl border border-black/10 dark:border-white/[0.08] bg-[#F7F8FA] dark:bg-[#0D0D10] p-6">
           <div className="flex items-center gap-2">
-            <QrCode className="w-5 h-5 text-blue-600" />
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+            <QrCode className="w-5 h-5 text-[#2F75C3] dark:text-[#2F71E3]" />
+            <h2 className="text-base font-semibold text-[#0A0A0C] dark:text-white">
               Pair a New Device
             </h2>
           </div>
@@ -119,7 +119,7 @@ export const DeviceManager: React.FC<DeviceManagerProps> = ({
             <div>
               <label
                 htmlFor="pair-device-name"
-                className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                className="block text-xs font-medium text-[#5F6368] dark:text-neutral-300 mb-1"
               >
                 Device Name
               </label>
@@ -129,14 +129,14 @@ export const DeviceManager: React.FC<DeviceManagerProps> = ({
                 value={deviceName}
                 onChange={(e) => setDeviceName(e.target.value)}
                 placeholder="e.g. Home Windows 11 PC"
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+                className="w-full rounded-xl border border-black/10 dark:border-white/15 bg-white dark:bg-[#070708] px-3.5 py-2 text-sm text-[#0A0A0C] dark:text-white focus:outline-none focus:border-[#2F71E3]"
               />
             </div>
 
             <div>
               <label
                 htmlFor="pair-platform"
-                className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+                className="block text-xs font-medium text-[#5F6368] dark:text-neutral-300 mb-1"
               >
                 Platform
               </label>
@@ -144,7 +144,7 @@ export const DeviceManager: React.FC<DeviceManagerProps> = ({
                 id="pair-platform"
                 value={platform}
                 onChange={(e) => setPlatform(e.target.value as DopePlatform)}
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+                className="w-full rounded-xl border border-black/10 dark:border-white/15 bg-white dark:bg-[#070708] px-3.5 py-2 text-sm text-[#0A0A0C] dark:text-white focus:outline-none focus:border-[#2F71E3]"
               >
                 <option value="windows">Windows 10 / 11 Companion</option>
                 <option value="macos">macOS Companion</option>
@@ -155,42 +155,42 @@ export const DeviceManager: React.FC<DeviceManagerProps> = ({
               </select>
             </div>
 
-            {formError && <p className="text-xs text-rose-600 dark:text-rose-400">{formError}</p>}
+            {formError && <p className="text-xs text-rose-500">{formError}</p>}
 
             <button
               type="submit"
               disabled={busy}
-              className="w-full px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+              className="w-full px-4 py-2.5 text-sm font-medium rounded-full bg-[#2F75C3] dark:bg-[#2F71E3] text-white hover:opacity-90 disabled:opacity-60 transition-opacity cursor-pointer"
             >
               {busy ? 'Generating...' : 'Generate Pairing Code & QR'}
             </button>
           </form>
 
           {activePairing && qrMatrix && (
-            <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800 flex flex-col items-center text-center">
+            <div className="mt-6 pt-5 border-t border-black/10 dark:border-white/[0.08] flex flex-col items-center text-center">
               <svg
                 width="132"
                 height="132"
                 viewBox="0 0 11 11"
                 aria-label={`Pairing QR matrix for ${activePairing.device_name}`}
-                className="p-2 bg-white rounded-lg border border-slate-200"
+                className="p-2 bg-white rounded-xl border border-black/10"
               >
                 {qrMatrix.map((row, r) =>
                   row.map((cell, c) =>
-                    cell ? <rect key={`${r}-${c}`} x={c} y={r} width={1} height={1} fill="#0F172A" /> : null
+                    cell ? <rect key={`${r}-${c}`} x={c} y={r} width={1} height={1} fill="#070708" /> : null
                   )
                 )}
               </svg>
-              <div className="mt-3 font-mono text-2xl font-bold tracking-widest text-slate-900 dark:text-slate-100 tabular-nums">
+              <div className="mt-3 font-mono text-2xl font-bold tracking-widest text-[#0A0A0C] dark:text-white tabular-nums">
                 {activePairing.code}
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-xs text-[#5F6368] dark:text-neutral-400 mt-1">
                 Pairing {activePairing.device_name} ({activePairing.platform}) · Expires in 5 minutes
               </p>
               <button
                 type="button"
                 onClick={() => void onCompletePairing(activePairing.code).then(() => setActivePairing(null))}
-                className="mt-3 px-3.5 py-1.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="mt-3 px-4 py-1.5 text-xs font-medium rounded-full border border-black/15 dark:border-white/15 text-[#0A0A0C] dark:text-white hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
               >
                 Verify &amp; Link Device
               </button>
@@ -199,28 +199,28 @@ export const DeviceManager: React.FC<DeviceManagerProps> = ({
         </section>
 
         {/* Paired Device List */}
-        <section className="lg:col-span-7 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+        <section className="lg:col-span-7 rounded-2xl border border-black/10 dark:border-white/[0.08] bg-[#F7F8FA] dark:bg-[#0D0D10] p-6">
+          <h2 className="text-base font-semibold text-[#0A0A0C] dark:text-white">
             Authorized Devices ({devices.length})
           </h2>
 
-          <div className="mt-4 divide-y divide-slate-200 dark:divide-slate-800">
+          <div className="mt-4 divide-y divide-black/10 dark:divide-white/[0.08]">
             {devices.map((dev) => {
               const isMobile = dev.platform === 'android' || dev.platform === 'ios';
               return (
                 <div key={dev.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-[#141418] border border-black/10 dark:border-white/10 text-[#0A0A0C] dark:text-neutral-200">
                       {isMobile ? <Smartphone className="w-4 h-4" /> : <Laptop className="w-4 h-4" />}
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      <div className="text-sm font-semibold text-[#0A0A0C] dark:text-white">
                         {dev.name}
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 tabular-nums">
+                      <div className="text-xs text-[#5F6368] dark:text-neutral-400 mt-0.5 tabular-nums">
                         {dev.platform} · {dev.os_version} · {dev.status}
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      <div className="text-xs text-[#5F6368] dark:text-neutral-400 mt-1">
                         Capabilities: {dev.capabilities.join(', ')}
                       </div>
                     </div>
@@ -230,10 +230,10 @@ export const DeviceManager: React.FC<DeviceManagerProps> = ({
                     <button
                       type="button"
                       onClick={() => void onToggleApproval(dev.id, !dev.remote_control_approved)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap shrink-0 ${
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded-full border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                         dev.remote_control_approved
-                          ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400'
-                          : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                          ? 'border-emerald-500/40 text-emerald-700 dark:text-emerald-400'
+                          : 'border-black/15 dark:border-white/15 text-[#5F6368] dark:text-neutral-400'
                       }`}
                     >
                       <ShieldCheck className="w-3.5 h-3.5" />
@@ -245,7 +245,7 @@ export const DeviceManager: React.FC<DeviceManagerProps> = ({
                         type="button"
                         onClick={() => void onRevokeDevice(dev.id)}
                         aria-label={`Revoke ${dev.name}`}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                        className="p-1.5 rounded-lg text-[#5F6368] hover:text-rose-500 cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

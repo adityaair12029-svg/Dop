@@ -1,18 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  ArrowRight,
   Download,
   ExternalLink,
   FileText,
+  Globe,
   Laptop,
   Mail,
   Maximize2,
   Mic,
   MicOff,
   Minimize2,
+  Moon,
   Puzzle,
   RefreshCw,
-  Send,
   Sparkles,
+  Sun,
   Volume2,
   VolumeX,
 } from 'lucide-react';
@@ -28,6 +31,8 @@ import {
   type SpeechRecognitionLike,
 } from '../lib/speech';
 import { downloadVerifiedZip } from '../lib/downloadZip';
+import { AntigravityParticles } from './AntigravityParticles';
+import { AntigravityMark } from './AntigravityMark';
 
 export interface HistoryRecord {
   id: string;
@@ -52,6 +57,9 @@ export interface GmailMessageItem {
 }
 
 interface VoiceConsoleProps {
+  theme: 'light' | 'dark';
+  onToggleTheme: () => void;
+  userName: string;
   language: 'auto' | 'en' | 'hi' | 'hinglish';
   onChangeLanguage: (lang: 'auto' | 'en' | 'hi' | 'hinglish') => void;
   voiceFeedbackEnabled: boolean;
@@ -86,16 +94,34 @@ interface VoiceConsoleProps {
   onOpenExtensionStudio?: () => void;
 }
 
-const SAMPLE_PROMPTS = [
-  'Hey Dop, open YouTube.',
-  'Hey Dop, what is 25 * 48?',
+const STARTER_ACTIONS = [
+  {
+    label: 'Open YouTube or any website',
+    cmd: 'Hey Dop, open YouTube.',
+    icon: Globe,
+  },
+  {
+    label: 'Ask any AI or math question',
+    cmd: 'Hey Dop, what is 25 * 48?',
+    icon: Sparkles,
+  },
+  {
+    label: 'Jump to page 15 in PDF viewer',
+    cmd: 'Hey Dop, go to page 15.',
+    icon: FileText,
+  },
+];
+
+const QUICK_CHIPS = [
   'Hey Dop, who invented Python?',
   'Hey Dop, scroll down.',
-  'Hey Dop, go to page 15.',
   'Hey Dop, YouTube chalao',
 ];
 
 export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
+  theme,
+  onToggleTheme,
+  userName,
   language,
   onChangeLanguage,
   voiceFeedbackEnabled,
@@ -150,6 +176,8 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const rafRef = useRef<number | null>(null);
 
+  const firstName = userName.trim().split(/\s+/)[0] || 'Doptails';
+
   const stopAudioCapture = () => {
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
@@ -176,12 +204,15 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const accent = theme === 'dark' ? '#2F71E3' : '#2F75C3';
+    const idleColor = theme === 'dark' ? 'rgba(255,255,255,0.16)' : 'rgba(10,10,12,0.14)';
+
     const drawBaseline = () => {
       const w = canvas.width;
       const h = canvas.height;
       ctx.clearRect(0, 0, w, h);
-      ctx.strokeStyle = isListening ? '#2563EB' : '#94A3B8';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = isListening ? accent : idleColor;
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(0, h / 2);
       ctx.lineTo(w, h / 2);
@@ -202,7 +233,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
       const w = canvas.width;
       const h = canvas.height;
       ctx.clearRect(0, 0, w, h);
-      ctx.strokeStyle = '#2563EB';
+      ctx.strokeStyle = accent;
       ctx.lineWidth = 2;
       ctx.beginPath();
       const slice = w / bufferLen;
@@ -220,9 +251,8 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
-  }, [isListening]);
+  }, [isListening, theme]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       stopAudioCapture();
@@ -369,7 +399,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
     setMicPermissionError(null);
     if (!navigator.mediaDevices?.getUserMedia) {
       setMicPermissionError(
-        'This browser environment does not expose microphone capture (navigator.mediaDevices). Use the text command bar below or run DOPE over HTTPS/localhost.'
+        'This browser environment does not expose microphone capture (navigator.mediaDevices). Use the command bar below or run DOPE over HTTPS/localhost.'
       );
       return;
     }
@@ -401,7 +431,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
       const rec = createBrowserSpeechRecognition(language);
       if (!rec) {
         setMicPermissionError(
-          'Microphone audio wave is live, but Web SpeechRecognition is unsupported in this browser. Type commands in the bar below or use the Desktop Companion.'
+          'Microphone wave is live, but Web SpeechRecognition is unsupported in this browser. Type commands in the bar below or run the Desktop Companion.'
         );
         return;
       }
@@ -435,7 +465,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
       rec.onerror = (ev) => {
         if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
           setMicPermissionError(
-            'Microphone permission was denied. Click the lock icon in your browser address bar, allow Microphone access, and try again.'
+            'Microphone permission was denied. Allow Microphone access in browser site settings and try again.'
           );
           stopAudioCapture();
         }
@@ -459,11 +489,11 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
       const name = err instanceof Error ? err.name : '';
       if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
         setMicPermissionError(
-          'Microphone permission denied. Open your browser site settings, set Microphone to Allow, and click Activate Voice again.'
+          'Microphone permission denied. Open your browser site settings, set Microphone to Allow, and try again.'
         );
       } else {
         setMicPermissionError(
-          `Could not start microphone (${err instanceof Error ? err.message : 'device unavailable'}). You can still enter commands in the text bar below.`
+          `Could not start microphone (${err instanceof Error ? err.message : 'device unavailable'}). You can still enter commands below.`
         );
       }
       stopAudioCapture();
@@ -479,32 +509,27 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Top Workspace Controls Row */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-            Voice Command Console
-          </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-            Wake phrase: <span className="font-semibold text-slate-900 dark:text-slate-200">Hey Dop</span>
-            <span aria-hidden="true"> · </span>
-            Shortcut:{' '}
-            <kbd className="font-mono text-xs px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700">
-              Alt+D+T
-            </kbd>{' '}
-            <span className="text-xs text-slate-500">(or Alt+D)</span>
-          </p>
+    <div className="space-y-6 ag-animate-in">
+      {/* Top Antigravity Workspace Strip */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-black/10 dark:border-white/[0.08] pb-4">
+        <div className="text-xs text-[#5F6368] dark:text-neutral-400 flex items-center gap-2">
+          <span className="font-medium text-[#0A0A0C] dark:text-white">Wake phrase:</span>
+          <span>Hey Dop</span>
+          <span aria-hidden="true">·</span>
+          <span>Shortcut:</span>
+          <kbd className="font-mono text-[11px] px-1.5 py-0.5 rounded border border-black/10 dark:border-white/15 bg-[#F7F8FA] dark:bg-[#141418] text-[#0A0A0C] dark:text-white">
+            Alt+D+T
+          </kbd>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <label className="flex items-center gap-2 text-xs font-medium text-[#5F6368] dark:text-neutral-400">
             <span>Language</span>
             <select
               aria-label="Assistant language"
               value={language}
               onChange={(e) => onChangeLanguage(e.target.value as 'auto' | 'en' | 'hi' | 'hinglish')}
-              className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100"
+              className="rounded-full border border-black/10 dark:border-white/15 bg-[#F7F8FA] dark:bg-[#0D0D10] px-3 py-1.5 text-xs text-[#0A0A0C] dark:text-white focus:outline-none focus:border-[#2F71E3]"
             >
               <option value="auto">Auto (EN / HI / Hinglish)</option>
               <option value="en">English</option>
@@ -513,13 +538,13 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
             </select>
           </label>
 
-          <label className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+          <label className="flex items-center gap-2 text-xs font-medium text-[#5F6368] dark:text-neutral-400">
             <span>Target Platform</span>
             <select
               aria-label="Target execution platform"
               value={targetPlatform}
               onChange={(e) => setTargetPlatform(e.target.value as DopePlatform)}
-              className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100"
+              className="rounded-full border border-black/10 dark:border-white/15 bg-[#F7F8FA] dark:bg-[#0D0D10] px-3 py-1.5 text-xs text-[#0A0A0C] dark:text-white focus:outline-none focus:border-[#2F71E3]"
             >
               <option value="web">Web Browser (Active)</option>
               <option value="browser_extension">Chrome / Edge Extension</option>
@@ -536,7 +561,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
               aria-label="Linux display server"
               value={linuxDisplay}
               onChange={(e) => setLinuxDisplay(e.target.value as 'x11' | 'wayland')}
-              className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100"
+              className="rounded-full border border-black/10 dark:border-white/15 bg-[#F7F8FA] dark:bg-[#0D0D10] px-3 py-1.5 text-xs text-[#0A0A0C] dark:text-white"
             >
               <option value="x11">Linux X11</option>
               <option value="wayland">Linux Wayland</option>
@@ -547,137 +572,182 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
             type="button"
             onClick={onToggleVoiceFeedback}
             aria-label={voiceFeedbackEnabled ? 'Mute spoken responses' : 'Enable spoken responses'}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap shrink-0"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-black/10 dark:border-white/15 bg-[#F7F8FA] dark:bg-[#0D0D10] text-[#0A0A0C] dark:text-white hover:border-[#2F71E3] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
-            {voiceFeedbackEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+            {voiceFeedbackEnabled ? <Volume2 className="w-3.5 h-3.5 text-[#2F71E3]" /> : <VolumeX className="w-3.5 h-3.5" />}
             <span>{voiceFeedbackEnabled ? 'Speech On' : 'Speech Muted'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            aria-label={theme === 'dark' ? 'Switch to Default Light theme' : 'Switch to Default Dark theme'}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-black/10 dark:border-white/15 bg-[#F7F8FA] dark:bg-[#0D0D10] text-[#0A0A0C] dark:text-white hover:border-[#2F71E3] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-3.5 h-3.5 text-[#FBBC05]" />
+            ) : (
+              <Moon className="w-3.5 h-3.5 text-[#2F75C3]" />
+            )}
+            <span>{theme === 'dark' ? 'Dark' : 'Light'}</span>
           </button>
         </div>
       </div>
 
-      {/* Main 2-Column Workspace */}
+      {/* Main 2-Column Antigravity Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left 7 Cols: Voice Orb + Waveform + Command Input + Result */}
+        {/* Left 7 Cols: Antigravity Particle Hero Stage + Composer + Result + History */}
         <div className="lg:col-span-7 space-y-6">
-          <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => (isListening ? stopAudioCapture() : void startListening(false))}
-                  aria-label={isListening ? 'Stop microphone listening' : 'Activate voice microphone'}
-                  className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${
-                    isListening
-                      ? 'bg-rose-600 hover:bg-rose-700 text-white'
-                      : 'bg-blue-600 hover:bg-blue-700 text-white'
-                  }`}
-                >
-                  {isListening ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-                </button>
-                <div>
-                  <div className="text-base font-semibold text-slate-900 dark:text-slate-100">
+          <section className="relative overflow-hidden rounded-2xl border border-black/10 dark:border-white/[0.08] bg-white dark:bg-[#070708] px-5 sm:px-8 py-8">
+            <AntigravityParticles
+              theme={theme}
+              active={isListening || isSubmitting}
+              className="absolute inset-0 w-full h-full"
+            />
+
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="ag-float mb-4 text-[#0A0A0C]/20 dark:text-white/25">
+                <AntigravityMark variant="monochrome" className="w-12 h-12" />
+              </div>
+
+              <h1 className="text-[26px] sm:text-[32px] font-medium tracking-[-0.025em] text-center text-[#0A0A0C] dark:text-white leading-tight text-balance">
+                Good to see you, {firstName}. What&apos;s next?
+              </h1>
+
+              {/* 3 Antigravity Starter Actions */}
+              <div className="mt-5 w-full max-w-md space-y-1">
+                {STARTER_ACTIONS.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.cmd}
+                      type="button"
+                      onClick={() => void executeCommand(item.cmd)}
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-[13px] font-medium text-[#5F6368] dark:text-neutral-300 hover:text-[#0A0A0C] dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.05] transition-colors cursor-pointer"
+                    >
+                      <Icon className="w-4 h-4 text-[#2F75C3] dark:text-[#2F71E3] shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Antigravity Sleek Rounded Composer Box */}
+              <div className="mt-6 w-full rounded-2xl border border-black/10 dark:border-white/[0.11] bg-[#F7F8FA]/95 dark:bg-[#0D0D10]/95 backdrop-blur-md p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <div className="text-xs font-medium text-[#5F6368] dark:text-neutral-400">
                     {isListening
                       ? wakeWordMode && !sessionActive
                         ? 'Waiting for "Hey Dop"...'
-                        : 'Listening for command'
-                      : 'Microphone idle'}
+                        : 'Listening for command...'
+                      : sessionActive
+                        ? 'Follow-up active — speak or type naturally'
+                        : 'Ask anything, say "Hey Dop", or press Alt+D+T'}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    {sessionActive
-                      ? 'Follow-up session active — speak naturally without repeating "Hey Dop"'
-                      : 'Tap to speak or enable Wake-Word Mode'}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      isListening && wakeWordMode ? stopAudioCapture() : void startListening(true)
+                    }
+                    className={`px-3 py-1 text-[11px] font-medium rounded-full border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                      isListening && wakeWordMode
+                        ? 'border-[#2F71E3] bg-[#2F71E3]/15 text-[#2F75C3] dark:text-[#93C5FD]'
+                        : 'border-black/10 dark:border-white/12 text-[#5F6368] dark:text-neutral-300 hover:text-[#0A0A0C] dark:hover:text-white'
+                    }`}
+                  >
+                    {isListening && wakeWordMode ? 'Stop "Hey Dop"' : 'Enable "Hey Dop" Mode'}
+                  </button>
                 </div>
+
+                {/* Voice-Wave Monitor */}
+                <div className="mb-2.5">
+                  <canvas
+                    ref={canvasRef}
+                    width={640}
+                    height={36}
+                    aria-label="Voice waveform monitor"
+                    className="w-full h-9 block"
+                  />
+                  {liveTranscript && (
+                    <p className="mt-1 text-xs text-[#2F75C3] dark:text-[#93C5FD] font-medium">
+                      Heard: &ldquo;{liveTranscript}&rdquo;
+                    </p>
+                  )}
+                </div>
+
+                {micPermissionError && (
+                  <div
+                    role="alert"
+                    className="mb-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-800 dark:text-amber-200"
+                  >
+                    {micPermissionError}
+                  </div>
+                )}
+
+                <form onSubmit={handleFormSubmit} className="space-y-3">
+                  <label htmlFor="dope-command-input" className="sr-only">
+                    Type or speak a DOPE command
+                  </label>
+                  <input
+                    id="dope-command-input"
+                    type="text"
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    placeholder='Ask anything ("25 * 48", "Who invented Python?") or say "YouTube kholo"'
+                    className="w-full bg-transparent text-sm text-[#0A0A0C] dark:text-white placeholder:text-[#5F6368] dark:placeholder:text-neutral-500 focus:outline-none"
+                  />
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-black/[0.07] dark:border-white/[0.08]">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {QUICK_CHIPS.map((phrase) => (
+                        <button
+                          key={phrase}
+                          type="button"
+                          onClick={() => void executeCommand(phrase)}
+                          className="px-2.5 py-1 text-[11px] rounded-full border border-black/10 dark:border-white/10 text-[#5F6368] dark:text-neutral-400 hover:border-[#2F71E3] hover:text-[#0A0A0C] dark:hover:text-white transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                        >
+                          {phrase.replace(/^Hey Dop,\s*/i, '')}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-2 ml-auto">
+                      <button
+                        type="button"
+                        onClick={() => (isListening ? stopAudioCapture() : void startListening(false))}
+                        aria-label={isListening ? 'Stop microphone listening' : 'Activate voice microphone'}
+                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shrink-0 cursor-pointer ${
+                          isListening
+                            ? 'bg-rose-600 text-white ag-orb-active'
+                            : 'bg-[#2F75C3] dark:bg-[#2F71E3] text-white hover:opacity-90'
+                        }`}
+                      >
+                        {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                      </button>
+
+                      <button
+                        type="submit"
+                        disabled={isSubmitting || !inputText.trim()}
+                        aria-label="Run command"
+                        className="w-9 h-9 rounded-full bg-[#0A0A0C] text-white dark:bg-white dark:text-[#070708] flex items-center justify-center hover:opacity-90 disabled:opacity-35 transition-opacity shrink-0 cursor-pointer"
+                      >
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </form>
               </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    isListening && wakeWordMode ? stopAudioCapture() : void startListening(true)
-                  }
-                  className={`px-3.5 py-2 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap shrink-0 ${
-                    isListening && wakeWordMode
-                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300'
-                      : 'border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  {isListening && wakeWordMode ? 'Stop Wake-Word' : 'Enable "Hey Dop" Mode'}
-                </button>
-              </div>
-            </div>
-
-            {/* Voice-Wave Canvas */}
-            <div className="mt-5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3">
-              <canvas
-                ref={canvasRef}
-                width={640}
-                height={56}
-                aria-label="Voice waveform monitor"
-                className="w-full h-14 block"
-              />
-              {liveTranscript && (
-                <p className="mt-2 text-xs text-slate-700 dark:text-slate-300 font-medium">
-                  Heard: &ldquo;{liveTranscript}&rdquo;
-                </p>
-              )}
-            </div>
-
-            {micPermissionError && (
-              <div
-                role="alert"
-                className="mt-4 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-3 text-xs text-amber-900 dark:text-amber-200"
-              >
-                {micPermissionError}
-              </div>
-            )}
-
-            {/* Text / Voice Command Input */}
-            <form onSubmit={handleFormSubmit} className="mt-5 flex gap-2">
-              <label htmlFor="dope-command-input" className="sr-only">
-                Type or speak a DOPE command
-              </label>
-              <input
-                id="dope-command-input"
-                type="text"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder='Ask any AI question ("25 * 48", "Who is Ada Lovelace?") or say "YouTube kholo"'
-                className="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
-              />
-              <button
-                type="submit"
-                disabled={isSubmitting || !inputText.trim()}
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap shrink-0"
-              >
-                <Send className="w-4 h-4" />
-                <span>{isSubmitting ? 'Thinking...' : 'Run'}</span>
-              </button>
-            </form>
-
-            {/* Quick Example Commands */}
-            <div className="mt-4 flex flex-wrap gap-2">
-              {SAMPLE_PROMPTS.map((phrase) => (
-                <button
-                  key={phrase}
-                  type="button"
-                  onClick={() => void executeCommand(phrase)}
-                  className="px-2.5 py-1 text-xs rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:border-blue-500 hover:text-blue-700 dark:hover:text-blue-400 transition-colors whitespace-nowrap shrink-0 max-w-full truncate"
-                >
-                  {phrase}
-                </button>
-              ))}
             </div>
           </section>
 
           {/* Latest Command Result & Action Schema Inspector */}
-          <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+          <section className="rounded-2xl border border-black/10 dark:border-white/[0.08] bg-[#F7F8FA] dark:bg-[#0D0D10] p-6">
             <div className="flex items-center justify-between gap-4">
-              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                Assistant Response & Action Output
+              <h2 className="text-base font-semibold text-[#0A0A0C] dark:text-white">
+                Assistant Response &amp; Action Output
               </h2>
               {lastResult && (
-                <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                <span className="text-xs text-[#5F6368] dark:text-neutral-400 tabular-nums">
                   {lastResult.status.replace(/_/g, ' ')} ·{' '}
                   {lastResult.ai_source === 'gemini' ? 'Gemini AI' : 'Offline Fallback'}
                 </span>
@@ -685,30 +755,30 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
             </div>
 
             {!lastResult ? (
-              <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-3 text-sm text-[#5F6368] dark:text-neutral-400">
                 Issue a voice or text command above to see DOPE&apos;s spoken response, validated action
                 schema, and honest execution feedback.
               </p>
             ) : (
-              <div className="mt-4 space-y-4">
+              <div className="mt-4 space-y-4 ag-animate-in">
                 {lastResult.action.action === 'answer_question' && (
-                  <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 dark:text-blue-300">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#2F75C3] dark:text-[#60A5FA]">
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>DOPE AI Answer</span>
                   </div>
                 )}
-                <p className="text-sm text-slate-900 dark:text-slate-100 font-medium leading-relaxed">
+                <p className="text-sm text-[#0A0A0C] dark:text-white font-medium leading-relaxed">
                   {lastResult.spoken_response}
                 </p>
 
                 {lastResult.clarification_question && (
-                  <p className="text-xs text-blue-700 dark:text-blue-400">
+                  <p className="text-xs text-[#2F75C3] dark:text-[#60A5FA]">
                     Clarification needed: {lastResult.clarification_question}
                   </p>
                 )}
 
                 {lastResult.unsupported_reason && (
-                  <p className="text-xs text-amber-700 dark:text-amber-400">
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
                     Platform limitation: {lastResult.unsupported_reason}
                   </p>
                 )}
@@ -722,18 +792,18 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                         href={lastResult.action.target}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:opacity-90"
+                        className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-full bg-[#0A0A0C] text-white dark:bg-white dark:text-[#070708] hover:opacity-90"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                         <span>Open {lastResult.action.target}</span>
                       </a>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                        Browser security blocks websites from opening tabs automatically without a click. Install the DOPE Chrome Extension (.zip) to auto-open tabs, switch tabs, scroll, and minimize Chrome windows directly.
+                      <p className="text-[11px] text-[#5F6368] dark:text-neutral-400">
+                        Install the DOPE Chrome Extension (.zip) to auto-open tabs, switch tabs, scroll, and minimize Chrome windows directly.
                       </p>
                     </div>
                   )}
 
-                <pre className="p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-mono text-slate-800 dark:text-slate-200 overflow-x-auto">
+                <pre className="p-3.5 rounded-xl bg-white dark:bg-[#070708] border border-black/10 dark:border-white/[0.08] text-xs font-mono text-[#0A0A0C] dark:text-neutral-200 overflow-x-auto">
                   {JSON.stringify(lastResult.action, null, 2)}
                 </pre>
               </div>
@@ -741,27 +811,27 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
           </section>
 
           {/* Recent Command History */}
-          <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+          <section className="rounded-2xl border border-black/10 dark:border-white/[0.08] bg-[#F7F8FA] dark:bg-[#0D0D10] p-6">
+            <h2 className="text-base font-semibold text-[#0A0A0C] dark:text-white">
               Recent Command History
             </h2>
             {history.length === 0 ? (
-              <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-3 text-sm text-[#5F6368] dark:text-neutral-400">
                 No commands executed yet in this workspace.
               </p>
             ) : (
-              <div className="mt-4 divide-y divide-slate-200 dark:divide-slate-800">
+              <div className="mt-4 divide-y divide-black/10 dark:divide-white/[0.08]">
                 {history.slice(0, 8).map((item) => (
                   <div key={item.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+                      <div className="text-sm font-medium text-[#0A0A0C] dark:text-white truncate">
                         {item.raw_input}
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                      <div className="text-xs text-[#5F6368] dark:text-neutral-400 mt-0.5 truncate">
                         {item.spoken_response}
                       </div>
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 shrink-0 tabular-nums font-mono">
+                    <div className="text-xs text-[#5F6368] dark:text-neutral-400 shrink-0 tabular-nums font-mono">
                       {item.action.action} · {item.status} ·{' '}
                       {new Date(item.timestamp).toLocaleTimeString([], {
                         hour: '2-digit',
@@ -777,32 +847,32 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
 
         {/* Right 5 Cols: Chrome Extension Quick Card + PDF Testbench + Connected Gmail Inbox */}
         <div className="lg:col-span-5 space-y-6">
-          <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
-            <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-200 dark:border-slate-800">
+          <section className="rounded-2xl border border-black/10 dark:border-white/[0.08] bg-[#F7F8FA] dark:bg-[#0D0D10] p-5">
+            <div className="flex items-center justify-between gap-2 pb-3 border-b border-black/10 dark:border-white/[0.08]">
               <div className="flex items-center gap-2 min-w-0">
-                <Puzzle className="w-4 h-4 text-blue-600 shrink-0" />
-                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
-                  Chrome &amp; Edge Extension (Pi-Style)
+                <Puzzle className="w-4 h-4 text-[#2F75C3] dark:text-[#2F71E3] shrink-0" />
+                <h2 className="text-sm font-semibold text-[#0A0A0C] dark:text-white truncate">
+                  Chrome Extension &amp; Desktop Bundle
                 </h2>
               </div>
               {onOpenExtensionStudio && (
                 <button
                   type="button"
                   onClick={onOpenExtensionStudio}
-                  className="text-xs font-medium text-blue-600 hover:underline whitespace-nowrap shrink-0"
+                  className="text-xs font-medium text-[#2F75C3] dark:text-[#60A5FA] hover:underline whitespace-nowrap shrink-0 cursor-pointer"
                 >
-                  Upload Custom Logo
+                  Customize Logo
                 </button>
               )}
             </div>
-            <p className="mt-3 text-xs text-slate-600 dark:text-slate-400">
-              Press{' '}
-              <kbd className="font-mono px-1 py-0.5 rounded border border-slate-300 dark:border-slate-700">
+            <p className="mt-3 text-xs text-[#5F6368] dark:text-neutral-400 leading-relaxed">
+              Antigravity-themed Chrome Extension v1.4 with radial particle animation, sweet chimes, and AI Q&amp;A. Press{' '}
+              <kbd className="font-mono px-1.5 py-0.5 rounded border border-black/10 dark:border-white/15 text-[#0A0A0C] dark:text-white">
                 Alt+D+T
               </kbd>{' '}
-              on any Chrome tab for voice + sweet chimes &amp; AI Q&amp;A. Download <strong>Laptop Desktop App (.zip)</strong> to get <strong>both</strong> Chrome Extension v1.3 (<code className="font-mono">chrome://extensions</code> &rarr; Load unpacked) <strong>and</strong> <code className="font-mono">python dope_companion.py</code> for Windows Desktop Home Screen.
+              anywhere in Chrome or Windows Home Screen (<code className="font-mono">python dope_companion.py</code>).
             </p>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="mt-4 flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 disabled={downloadBusy !== null}
@@ -824,7 +894,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                     setDownloadBusy(null);
                   }
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 whitespace-nowrap shrink-0"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-full bg-[#2F75C3] dark:bg-[#2F71E3] text-white hover:opacity-90 disabled:opacity-60 transition-opacity whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>{downloadBusy === 'extension' ? 'Downloading...' : 'Chrome Extension (.zip)'}</span>
@@ -850,7 +920,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                     setDownloadBusy(null);
                   }
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:opacity-90 disabled:opacity-60 whitespace-nowrap shrink-0"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-full bg-[#0A0A0C] text-white dark:bg-white dark:text-[#070708] hover:opacity-90 disabled:opacity-60 transition-opacity whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <Laptop className="w-3.5 h-3.5" />
                 <span>{downloadBusy === 'desktop' ? 'Downloading...' : 'Laptop Desktop App (.zip)'}</span>
@@ -859,19 +929,19 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                 <button
                   type="button"
                   onClick={onOpenExtensionStudio}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap shrink-0"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-full border border-black/15 dark:border-white/15 text-[#0A0A0C] dark:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
                 >
-                  <span>Customize Logo &amp; Install Steps</span>
+                  <span>Install Steps</span>
                 </button>
               )}
             </div>
             {downloadNote && (
               <div
                 role="status"
-                className={`mt-2.5 rounded-lg border px-3 py-2 text-[11px] ${
+                className={`mt-3 rounded-xl border px-3 py-2 text-[11px] ${
                   downloadNote.ok
-                    ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200'
-                    : 'border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/30 text-rose-900 dark:text-rose-200'
+                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                    : 'border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300'
                 }`}
               >
                 {downloadNote.text}
@@ -879,11 +949,11 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
             )}
           </section>
 
-          <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
-            <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-200 dark:border-slate-800">
+          <section className="rounded-2xl border border-black/10 dark:border-white/[0.08] bg-[#F7F8FA] dark:bg-[#0D0D10] p-5">
+            <div className="flex items-center justify-between gap-2 pb-3 border-b border-black/10 dark:border-white/[0.08]">
               <div className="flex items-center gap-2 min-w-0">
-                <FileText className="w-4 h-4 text-blue-600 shrink-0" />
-                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+                <FileText className="w-4 h-4 text-[#2F75C3] dark:text-[#2F71E3] shrink-0" />
+                <h2 className="text-sm font-semibold text-[#0A0A0C] dark:text-white truncate">
                   PDF &amp; Document Testbench
                 </h2>
               </div>
@@ -895,14 +965,14 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                     e.target.value as 'browser_pdf_testbench' | 'unsupported_viewer'
                   )
                 }
-                className="rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-2 py-1 text-xs text-slate-800 dark:text-slate-200 shrink-0"
+                className="rounded-full border border-black/10 dark:border-white/15 bg-white dark:bg-[#070708] px-2.5 py-1 text-xs text-[#0A0A0C] dark:text-white shrink-0"
               >
                 <option value="browser_pdf_testbench">Compatible Viewer</option>
                 <option value="unsupported_viewer">Unsupported PDF</option>
               </select>
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-400 tabular-nums">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[#5F6368] dark:text-neutral-400 tabular-nums">
               <span>
                 Page {pdfPage} / 25 · Zoom {pdfZoom}% · Fit: {pdfFitMode}
                 {pdfReloadCount > 0 ? ` · Reloaded ${pdfReloadCount}x` : ''}
@@ -912,7 +982,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                   type="button"
                   onClick={() => setPdfReloadCount((c) => c + 1)}
                   aria-label="Reload PDF"
-                  className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                 </button>
@@ -920,7 +990,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                   type="button"
                   onClick={() => setPdfMinimized((m) => !m)}
                   aria-label={pdfMinimized ? 'Restore PDF window' : 'Minimize PDF window'}
-                  className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10"
                 >
                   {pdfMinimized ? (
                     <Maximize2 className="w-3.5 h-3.5" />
@@ -932,27 +1002,26 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
             </div>
 
             {pdfMinimized ? (
-              <div className="mt-3 p-4 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-center text-xs text-slate-500 dark:text-slate-400">
+              <div className="mt-3 p-4 rounded-xl border border-dashed border-black/15 dark:border-white/15 text-center text-xs text-[#5F6368] dark:text-neutral-400">
                 PDF window minimized. Say &ldquo;Hey Dop, restore this PDF window&rdquo; or click restore.
               </div>
             ) : (
               <div
                 ref={pdfScrollRef}
                 data-testid="pdf-viewport"
-                className="mt-3 h-64 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4"
+                className="mt-3 h-64 overflow-y-auto rounded-xl border border-black/10 dark:border-white/[0.08] bg-white dark:bg-[#070708] p-4"
               >
                 <div
                   style={{ transform: `scale(${pdfZoom / 100})`, transformOrigin: 'top left' }}
-                  className="space-y-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300"
+                  className="space-y-3 text-xs leading-relaxed text-[#5F6368] dark:text-neutral-300"
                 >
-                  <div className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+                  <div className="font-semibold text-sm text-[#0A0A0C] dark:text-white">
                     DOPE Architecture Specification — Page {pdfPage}
                   </div>
                   <p>
                     Try voice or text commands like &ldquo;Hey Dop, scroll down&rdquo;, &ldquo;Hey Dop,
                     zoom in&rdquo;, &ldquo;Hey Dop, go to page 15&rdquo;, &ldquo;Hey Dop, fit page to
-                    width&rdquo;, or switch the dropdown above to Unsupported Scanned PDF to verify
-                    honest capability checks.
+                    width&rdquo;, or switch the dropdown above to Unsupported PDF to verify honest capability checks.
                   </p>
                   <p>
                     Section {pdfPage}.1 — Separation of Reasoning and Execution: The language model
@@ -974,11 +1043,11 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
           </section>
 
           {/* Gmail Workspace Integration Card */}
-          <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
-            <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-200 dark:border-slate-800">
+          <section className="rounded-2xl border border-black/10 dark:border-white/[0.08] bg-[#F7F8FA] dark:bg-[#0D0D10] p-5">
+            <div className="flex items-center justify-between gap-2 pb-3 border-b border-black/10 dark:border-white/[0.08]">
               <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-blue-600" />
-                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <Mail className="w-4 h-4 text-[#2F75C3] dark:text-[#2F71E3]" />
+                <h2 className="text-sm font-semibold text-[#0A0A0C] dark:text-white">
                   Gmail Voice Integration
                 </h2>
               </div>
@@ -987,7 +1056,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                   type="button"
                   onClick={onFetchGmail}
                   disabled={gmailLoading}
-                  className="text-xs font-medium text-blue-600 hover:underline whitespace-nowrap shrink-0"
+                  className="text-xs font-medium text-[#2F75C3] dark:text-[#60A5FA] hover:underline whitespace-nowrap shrink-0"
                 >
                   {gmailLoading ? 'Refreshing...' : 'Refresh Inbox'}
                 </button>
@@ -996,44 +1065,44 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
 
             {!hasGmailToken ? (
               <div className="mt-4 space-y-3">
-                <p className="text-xs text-slate-600 dark:text-slate-400">
+                <p className="text-xs text-[#5F6368] dark:text-neutral-400">
                   Connect your Google account with permission to let DOPE read inbox summaries by voice
                   and send emails (always requiring explicit confirmation).
                 </p>
                 <button
                   type="button"
                   onClick={onRequestGoogleSignIn}
-                  className="px-3.5 py-2 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                  className="px-4 py-2 text-xs font-medium rounded-full bg-[#2F75C3] dark:bg-[#2F71E3] text-white hover:opacity-90 transition-opacity cursor-pointer"
                 >
                   Connect Gmail Account
                 </button>
               </div>
             ) : gmailError ? (
-              <p className="mt-3 text-xs text-rose-600 dark:text-rose-400">{gmailError}</p>
+              <p className="mt-3 text-xs text-rose-500">{gmailError}</p>
             ) : gmailMessages.length === 0 ? (
               <div className="mt-3 space-y-2">
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-[#5F6368] dark:text-neutral-400">
                   Gmail connected. Click Refresh Inbox or say &ldquo;Hey Dop, check my unread emails.&rdquo;
                 </p>
               </div>
             ) : (
-              <div className="mt-3 divide-y divide-slate-200 dark:divide-slate-800">
+              <div className="mt-3 divide-y divide-black/10 dark:divide-white/[0.08]">
                 {gmailMessages.map((msg) => (
                   <div key={msg.id} className="py-2.5">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
+                      <span className="text-xs font-semibold text-[#0A0A0C] dark:text-white truncate">
                         {msg.subject}
                       </span>
                       {msg.unread && (
-                        <span className="text-[11px] font-medium text-blue-600 dark:text-blue-400 shrink-0">
+                        <span className="text-[11px] font-medium text-[#2F75C3] dark:text-[#60A5FA] shrink-0">
                           Unread
                         </span>
                       )}
                     </div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    <div className="text-[11px] text-[#5F6368] dark:text-neutral-400 truncate mt-0.5">
                       {msg.from}
                     </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 line-clamp-2">
+                    <p className="text-xs text-[#5F6368] dark:text-neutral-300 mt-1 line-clamp-2">
                       {msg.snippet}
                     </p>
                   </div>

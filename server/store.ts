@@ -94,7 +94,7 @@ const DEFAULT_STATE: DopeStoreState = {
   ],
   pending_pairings: [],
   settings: {
-    theme: 'light',
+    theme: 'dark',
     language: 'auto',
     wake_word_enabled: false,
     wake_word_engine: 'openwakeword',

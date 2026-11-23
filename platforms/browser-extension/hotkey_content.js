@@ -5,6 +5,7 @@
   let hostEl = null;
   let recognition = null;
   let hideTimer = null;
+  let particleRaf = null;
 
   function playTone(notes) {
     try {
@@ -88,6 +89,10 @@
 
   function removeHud() {
     if (hideTimer) clearTimeout(hideTimer);
+    if (particleRaf !== null) {
+      cancelAnimationFrame(particleRaf);
+      particleRaf = null;
+    }
     try {
       recognition?.stop();
     } catch {
@@ -110,48 +115,83 @@
 
     const style = document.createElement('style');
     style.textContent = `
+      @keyframes agHudLiftoff {
+        from { opacity: 0; transform: translateY(12px) scale(0.97); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      @keyframes agOrbPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(47, 113, 227, 0.5); }
+        50% { box-shadow: 0 0 0 9px rgba(47, 113, 227, 0); }
+      }
       .dope-hud {
         position: fixed;
-        right: 20px;
-        bottom: 20px;
+        right: 22px;
+        bottom: 22px;
         z-index: 2147483647;
-        width: 320px;
-        background: linear-gradient(145deg, #0f172a, #172554);
-        color: #f8fafc;
-        border: 1px solid rgba(96, 165, 250, 0.4);
+        width: 344px;
+        overflow: hidden;
+        background: #070708;
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 18px;
-        padding: 14px 16px;
-        box-shadow: 0 18px 40px rgba(2, 6, 23, 0.55);
-        font-family: system-ui, -apple-system, sans-serif;
+        padding: 15px 16px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+        font-family: 'Plus Jakarta Sans', 'DM Sans', system-ui, -apple-system, sans-serif;
+        animation: agHudLiftoff 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
       }
+      .ag-bg-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .hud-body { position: relative; z-index: 1; }
       .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
       .brand { display: flex; align-items: center; gap: 10px; }
       .orb {
-        width: 34px; height: 34px; border-radius: 999px;
-        background: radial-gradient(circle at 30% 30%, #60a5fa, #2563eb);
-        box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.25);
+        width: 32px; height: 32px; border-radius: 999px;
+        background: #2f71e3;
+        animation: agOrbPulse 1.5s ease-in-out infinite;
         flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
       }
-      .title { font-size: 14px; font-weight: 700; }
-      .sub { font-size: 12px; color: #cbd5e1; margin-top: 2px; }
+      .title { font-size: 13.5px; font-weight: 600; letter-spacing: -0.02em; color: #ffffff; }
+      .sub { font-size: 12px; color: #9ca3af; margin-top: 2px; line-height: 1.4; }
       .close {
-        background: transparent; color: #94a3b8; border: 0;
-        font-size: 16px; cursor: pointer; padding: 2px 6px;
+        background: transparent; color: #9ca3af; border: 0;
+        font-size: 16px; cursor: pointer; padding: 2px 6px; border-radius: 8px;
       }
-      .row { display: flex; gap: 6px; margin-top: 10px; }
+      .close:hover { color: #ffffff; background: rgba(255,255,255,0.08); }
+      .row {
+        display: flex; gap: 6px; margin-top: 12px;
+        background: #0d0d10; border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 14px; padding: 4px 4px 4px 12px;
+      }
+      .row:focus-within { border-color: #2f71e3; }
       .inp {
-        flex: 1; background: rgba(15, 23, 42, 0.85); color: #fff;
-        border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 10px;
-        padding: 7px 10px; font-size: 12px; outline: none;
+        flex: 1; background: transparent; color: #ffffff;
+        border: 0; font-size: 12.5px; outline: none;
       }
+      .inp::placeholder { color: #6b7280; }
       .go {
-        background: #2563eb; color: #fff; border: 0; border-radius: 10px;
-        padding: 7px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+        background: #ffffff; color: #070708; border: 0; border-radius: 999px;
+        padding: 6px 13px; font-size: 12px; font-weight: 600; cursor: pointer;
       }
+      .go:hover { opacity: 0.9; }
     `;
 
     const card = document.createElement('div');
     card.className = 'dope-hud';
+
+    const bgCanvas = document.createElement('canvas');
+    bgCanvas.className = 'ag-bg-canvas';
+    bgCanvas.width = 344;
+    bgCanvas.height = 140;
+
+    const hudBody = document.createElement('div');
+    hudBody.className = 'hud-body';
 
     const top = document.createElement('div');
     top.className = 'top';
@@ -165,7 +205,7 @@
     title.textContent = 'DOPE Listening (Alt + D + T)';
     const sub = document.createElement('div');
     sub.className = 'sub';
-    sub.textContent = 'Speak a command or ask any question...';
+    sub.textContent = 'Good to see you. Speak a command or ask AI...';
     txtWrap.append(title, sub);
     brand.append(orb, txtWrap);
 
@@ -181,16 +221,48 @@
     const inp = document.createElement('input');
     inp.className = 'inp';
     inp.type = 'text';
-    inp.placeholder = 'Ask AI or say: open YouTube...';
+    inp.placeholder = 'Ask anything or say: open YouTube...';
     const goBtn = document.createElement('button');
     goBtn.className = 'go';
     goBtn.type = 'submit';
     goBtn.textContent = 'Run';
     form.append(inp, goBtn);
 
-    card.append(top, form);
+    hudBody.append(top, form);
+    card.append(bgCanvas, hudBody);
     shadow.append(style, card);
     document.documentElement.appendChild(hostEl);
+
+    // Render Antigravity radial particles inside HUD background
+    const ctx = bgCanvas.getContext('2d');
+    if (ctx) {
+      const colors = ['#2F71E3', '#60A5FA', '#818CF8', '#A78BFA', '#F87171', '#FBBF24'];
+      const particles = Array.from({ length: 28 }, (_, i) => ({
+        angle: ((i * 137.508) % 360) * (Math.PI / 180),
+        r: 0.15 + ((i * 17) % 100) / 110,
+        speed: 0.0022 + (i % 5) * 0.0005,
+        color: colors[i % colors.length],
+      }));
+      const animateHudParticles = () => {
+        if (!hostEl) return;
+        ctx.clearRect(0, 0, 344, 140);
+        for (const p of particles) {
+          p.r += p.speed;
+          if (p.r > 1.05) p.r = 0.12;
+          const x = 172 + Math.cos(p.angle) * (p.r * 190);
+          const y = 65 + Math.sin(p.angle) * (p.r * 95);
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(p.angle);
+          ctx.globalAlpha = 0.32;
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-2, -0.8, 4, 1.6);
+          ctx.restore();
+        }
+        particleRaf = requestAnimationFrame(animateHudParticles);
+      };
+      particleRaf = requestAnimationFrame(animateHudParticles);
+    }
 
     function dispatch(text) {
       const clean = text.trim();
@@ -278,7 +350,6 @@
         lastChordTrigger = Date.now();
         openFloatingOverlay();
       } else if (isAltDOnly && Date.now() - lastChordTrigger > 500) {
-        // Brief wait allows Alt+D+T chord to complete without double-firing
         setTimeout(() => {
           if (!pressedKeys.has('t') && Date.now() - lastChordTrigger > 250 && !hostEl) {
             openFloatingOverlay();

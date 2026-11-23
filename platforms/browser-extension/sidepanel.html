@@ -1,21 +1,23 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <title>DOPE Side Panel</title>
     <link rel="stylesheet" href="ui.css" />
   </head>
   <body>
+    <canvas id="agParticles" class="ag-particles-bg" aria-hidden="true"></canvas>
     <main class="shell">
       <header class="header">
         <div class="brand">
           <img src="icons/icon48.png" alt="DOPE logo" />
           <div class="brand-title">
             <h1>DOPE Assistant</h1>
-            <span class="shortcut-tag">Shortcut: Alt + D + T</span>
+            <span class="shortcut-tag">Alt + D + T</span>
           </div>
         </div>
         <div class="header-actions">
+          <button id="themeToggleBtn" class="icon-btn" type="button" title="Toggle Antigravity Dark/Light">Dark</button>
           <button id="soundToggleBtn" class="icon-btn active" type="button" title="Toggle sound chimes">Sound On</button>
           <button id="settingsToggleBtn" class="icon-btn" type="button">Server</button>
         </div>
@@ -28,6 +30,7 @@
       </div>
 
       <section class="orb-stage">
+        <h2 class="ag-greeting">Good to see you. What&apos;s next?</h2>
         <div class="orb-wrap">
           <button id="micBtn" class="mic-orb" type="button" aria-label="Activate DOPE voice">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -53,7 +56,7 @@
       </section>
 
       <section id="feed" class="feed" aria-live="polite">
-        <div class="orb-sub empty-hint">Ready. Ask any AI question ("Who invented Python?", "25 * 48?") or say "YouTube kholo", "scroll down", or "close tab".</div>
+        <div class="orb-sub empty-hint">Ready. Ask anything (&ldquo;Who invented Python?&rdquo;, &ldquo;25 * 48?&rdquo;) or say &ldquo;YouTube kholo&rdquo;, &ldquo;scroll down&rdquo;, or &ldquo;close tab&rdquo;.</div>
       </section>
 
       <div class="quick-grid">
@@ -66,7 +69,7 @@
       </div>
 
       <form id="cmdForm" class="input-row">
-        <input id="cmdInput" type="text" placeholder="Ask any AI question or say 'YouTube kholo'..." />
+        <input id="cmdInput" type="text" placeholder="Ask anything or say 'YouTube kholo'..." />
         <button type="submit">Send</button>
       </form>
     </main>
