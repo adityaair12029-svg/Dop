@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import JSZip from 'jszip';
+import { getActiveIconBuffer } from './extensionZip';
 
 const DESKTOP_DIR = path.resolve(process.cwd(), 'platforms', 'desktop-companion');
+const EXT_DIR = path.resolve(process.cwd(), 'platforms', 'browser-extension');
 
 export async function buildDesktopBundleZip(serverOrigin: string): Promise<Buffer> {
   const zip = new JSZip();
@@ -10,13 +12,42 @@ export async function buildDesktopBundleZip(serverOrigin: string): Promise<Buffe
     ? serverOrigin
     : 'http://localhost:3000';
 
-  const rootFiles = [
-    'dope_companion.py',
-    'wake_word_engine.py',
-    'requirements.txt',
-    'Run-DOPE-Desktop.bat',
-    'run_dope_desktop.sh',
+  // Include Chrome Extension MV3 files at ZIP root (without any `_`-prefixed files)
+  // so `Load unpacked` in chrome://extensions ALSO succeeds cleanly if selected,
+  // AND running `python dope_companion.py` starts the Whole-Laptop Desktop Assistant!
+  const extFiles = [
+    'manifest.json',
+    'background.js',
+    'hotkey_content.js',
+    'popup.html',
+    'sidepanel.html',
+    'ui.css',
+    'ui.js',
+    'native_messaging_host.json',
   ];
+
+  for (const file of extFiles) {
+    const full = path.join(EXT_DIR, file);
+    if (!fs.existsSync(full)) continue;
+    let content = fs.readFileSync(full, 'utf-8');
+    if (file === 'background.js') {
+      content = content.replace('__DOPE_SERVER_URL__', safeOrigin);
+    }
+    zip.file(file, content);
+  }
+
+  const iconsFolder = zip.folder('icons');
+  for (const size of [16, 48, 128] as const) {
+    const buf = getActiveIconBuffer(size);
+    if (buf && iconsFolder) {
+      iconsFolder.file(`icon${size}.png`, buf);
+    }
+  }
+
+  // Include ONLY .py and .txt desktop companion files (zero .bat/.sh executables
+  // and zero `_`-prefixed files like __init__.py so both Chrome Safe Browsing and
+  // chrome://extensions Load unpacked accept the folder cleanly).
+  const rootFiles = ['dope_companion.py', 'wake_word_engine.py', 'requirements.txt'];
 
   for (const file of rootFiles) {
     const full = path.join(DESKTOP_DIR, file);
@@ -31,37 +62,28 @@ export async function buildDesktopBundleZip(serverOrigin: string): Promise<Buffe
   const adaptersDir = path.join(DESKTOP_DIR, 'adapters');
   const adaptersFolder = zip.folder('adapters');
   if (fs.existsSync(adaptersDir) && adaptersFolder) {
-    const initFile = path.join(adaptersDir, '__init__.py');
-    if (!fs.existsSync(initFile)) {
-      adaptersFolder.file('__init__.py', '');
-    }
     for (const item of fs.readdirSync(adaptersDir)) {
-      if (item.endsWith('.py')) {
+      if (item.endsWith('.py') && !item.startsWith('_')) {
         adaptersFolder.file(item, fs.readFileSync(path.join(adaptersDir, item), 'utf-8'));
       }
     }
   }
 
-  const readme = `DOPE Whole-Laptop Desktop Assistant (Windows / macOS / Linux)
-==================================================================
-Why this Desktop App?
-Browser extensions (Chrome/Edge) are sandboxed inside browser tabs by Windows/macOS.
-To use Alt + D + T on your Laptop Home Screen, File Explorer, VS Code, or when Chrome
-is closed, run this lightweight DOPE Desktop Assistant.
+  const readme = `DOPE Universal Package (Chrome Extension v1.3 + Whole-Laptop Desktop Assistant)
+==============================================================================
+This folder contains BOTH:
+1) Chrome & Microsoft Edge Extension (manifest.json):
+   - Extract All -> open chrome://extensions -> Developer mode ON -> Load unpacked -> select this folder.
+   - Press Alt + D + T on any Chrome tab to open DOPE voice + AI Q&A + sweet chimes!
 
-Quick Start (Windows 10 / 11):
-1. Extract this ZIP completely (Right-click -> Extract All...).
-2. Double-click "Run-DOPE-Desktop.bat".
-   (First launch installs Python dependencies automatically in a local .venv folder.)
-3. Press Alt + D + T anywhere on your laptop — you'll hear a sweet activation chime,
-   and DOPE listens on your laptop mic to answer any AI question or control apps/windows!
-
-Quick Start (macOS / Linux):
-1. Extract this ZIP.
-2. Run: chmod +x run_dope_desktop.sh && ./run_dope_desktop.sh
+2) Whole-Laptop Desktop Assistant (Windows Home Screen & All Apps):
+   - Open Command Prompt / Terminal inside this extracted folder and run:
+       python dope_companion.py
+   - First run auto-installs Python packages!
+   - Then press Alt + D + T ANYWHERE on your laptop (Windows Home Screen, File Explorer,
+     VS Code, or when Chrome is closed) for sweet chimes, laptop mic, AI Q&A, and OS control!
 
 Configured DOPE AI Backend URL: ${safeOrigin}
-(You can override it anytime via DOPE_SERVER_URL environment variable.)
 `;
   zip.file('INSTALL_DESKTOP.txt', readme);
 

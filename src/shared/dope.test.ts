@@ -233,11 +233,17 @@ test('AI Q&A offline fallback (math, time, date, identity) & Desktop Assistant Z
   assert.equal(desktopBuf.subarray(0, 4).toString('hex'), '504b0304');
 
   const parsedDesktop = await JSZip.loadAsync(desktopBuf);
+  assert.ok(parsedDesktop.file('manifest.json'), 'manifest.json must be in Desktop ZIP so Chrome Load unpacked also succeeds');
+  assert.ok(parsedDesktop.file('icons/icon128.png'), 'icons/icon128.png must be in Desktop ZIP');
   assert.ok(parsedDesktop.file('dope_companion.py'), 'dope_companion.py must be in desktop ZIP');
-  assert.ok(parsedDesktop.file('Run-DOPE-Desktop.bat'), 'Run-DOPE-Desktop.bat must be in desktop ZIP');
+  assert.ok(parsedDesktop.file('INSTALL_DESKTOP.txt'), 'INSTALL_DESKTOP.txt must be in desktop ZIP');
+  assert.equal(parsedDesktop.file('Run-DOPE-Desktop.bat'), null, 'No .bat scripts inside ZIP so Chrome Safe Browsing does not block download');
+  assert.equal(parsedDesktop.file('adapters/__init__.py'), null, 'No _-prefixed files so Chrome Load unpacked accepts the folder');
   assert.ok(parsedDesktop.file('adapters/windows_adapter.py'), 'windows_adapter.py must be in desktop ZIP');
   const pyCode = await parsedDesktop.file('dope_companion.py')!.async('string');
   assert.ok(pyCode.includes('https://example.dope.local'));
   assert.ok(pyCode.includes('alt+d+t'));
+  assert.ok(pyCode.includes('bootstrap_dependencies'));
+  assert.ok(pyCode.includes('dont_write_bytecode'));
 });
 

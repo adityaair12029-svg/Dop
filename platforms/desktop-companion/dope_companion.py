@@ -1,6 +1,7 @@
 """
-DOPE Whole-Laptop Desktop Companion Entrypoint.
-Runs globally across Windows Desktop home screen, macOS, and Linux:
+DOPE Whole-Laptop Desktop Assistant (Windows / macOS / Linux).
+Self-installs required Python packages on first launch, then runs globally across
+your Windows Desktop Home Screen, File Explorer, VS Code, and all apps:
 - Press Alt + D + T anywhere (even when Chrome is closed or minimized)
 - Plays sweet harmonic bell chimes (activate, executing, success, error)
 - Captures laptop microphone speech (EN-IN / Hindi / Hinglish / English)
@@ -10,12 +11,16 @@ Runs globally across Windows Desktop home screen, macOS, and Linux:
 
 from __future__ import annotations
 
+import sys
+
+sys.dont_write_bytecode = True
+
+import importlib
 import math
 import os
 import shutil
 import struct
 import subprocess
-import sys
 import tempfile
 import threading
 import time
@@ -24,14 +29,70 @@ import webbrowser
 from pathlib import Path
 from typing import Any
 
-import requests
-
-from adapters.windows_adapter import WindowsAdapter
-from adapters.macos_adapter import MacOSAdapter
-from adapters.linux_adapter import LinuxAdapter
-from adapters.pdf_adapter import PdfViewerAdapter
+_SCRIPT_DIR = str(Path(__file__).resolve().parent)
+if _SCRIPT_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPT_DIR)
 
 DEFAULT_SERVER_URL = "__DOPE_SERVER_URL__"
+
+
+def bootstrap_dependencies() -> None:
+    """Auto-install required Python packages on first run so no .bat script is needed."""
+    required: list[tuple[str, str]] = [
+        ("requests", "requests>=2.32.0"),
+        ("keyboard", "keyboard>=0.13.5"),
+        ("pynput", "pynput>=1.7.7"),
+        ("speech_recognition", "SpeechRecognition>=3.10.0"),
+        ("pyttsx3", "pyttsx3>=2.90"),
+    ]
+    if sys.platform == "win32":
+        required.extend(
+            [
+                ("pywinauto", "pywinauto>=0.6.8"),
+                ("pycaw", "pycaw>=20240210"),
+                ("comtypes", "comtypes>=1.4.0"),
+            ]
+        )
+    elif sys.platform == "darwin":
+        required.append(("AppKit", "pyobjc-framework-Cocoa>=10.3"))
+
+    missing: list[str] = []
+    for mod_name, pkg_spec in required:
+        try:
+            importlib.import_module(mod_name)
+        except ImportError:
+            missing.append(pkg_spec)
+
+    if missing:
+        print("[DOPE] First-time setup: installing required desktop packages...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", *missing])
+            print("[DOPE] Core packages installed.")
+        except Exception as exc:
+            print(f"[DOPE Warning] Auto-install had an issue ({exc}). Continuing with available modules...")
+
+    if sys.platform == "win32":
+        try:
+            importlib.import_module("pyaudio")
+        except ImportError:
+            try:
+                subprocess.call(
+                    [sys.executable, "-m", "pip", "install", "--quiet", "PyAudio>=0.2.14"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+            except Exception:
+                pass
+
+
+bootstrap_dependencies()
+
+import requests  # noqa: E402
+
+from adapters.windows_adapter import WindowsAdapter  # noqa: E402
+from adapters.macos_adapter import MacOSAdapter  # noqa: E402
+from adapters.linux_adapter import LinuxAdapter  # noqa: E402
+from adapters.pdf_adapter import PdfViewerAdapter  # noqa: E402
 
 _SESSION_LOCK = threading.Lock()
 _CHIME_DIR = Path(tempfile.gettempdir()) / "dope_chimes"
@@ -55,10 +116,7 @@ def get_platform_adapter():
 
 
 def _write_harmonic_chime_wav(filepath: Path, notes: list[tuple[float, float, float, float]]) -> None:
-    """
-    Generate a warm dual-oscillator harmonic bell chime WAV using pure Python stdlib.
-    Each note tuple is (freq_hz, start_sec, duration_sec, amplitude).
-    """
+    """Generate a warm dual-oscillator harmonic bell chime WAV using pure Python stdlib."""
     sample_rate = 22050
     total_sec = max(start + dur for _, start, dur, _ in notes) + 0.05
     num_samples = int(sample_rate * total_sec)
@@ -95,25 +153,21 @@ def _write_harmonic_chime_wav(filepath: Path, notes: list[tuple[float, float, fl
 def ensure_chime_files() -> dict[str, Path]:
     _CHIME_DIR.mkdir(parents=True, exist_ok=True)
     specs: dict[str, list[tuple[float, float, float, float]]] = {
-        # C-maj9 airy bell chime on Alt+D+T wake
         "activate": [
             (523.25, 0.00, 0.20, 0.34),
             (659.25, 0.06, 0.22, 0.32),
             (783.99, 0.12, 0.24, 0.32),
             (1174.66, 0.18, 0.34, 0.28),
         ],
-        # Gentle thinking / executing pulse
         "executing": [
             (659.25, 0.00, 0.12, 0.26),
             (880.00, 0.07, 0.16, 0.26),
         ],
-        # Warm ascending confirmation cadence
         "success": [
             (783.99, 0.00, 0.16, 0.28),
             (987.77, 0.07, 0.18, 0.28),
             (1174.66, 0.14, 0.28, 0.30),
         ],
-        # Soft gentle descending error tone
         "error": [
             (293.66, 0.00, 0.16, 0.28),
             (261.63, 0.12, 0.24, 0.26),
@@ -173,7 +227,6 @@ def speak_text(text: str) -> None:
 
     try:
         if sys.platform == "win32":
-            # Built-in Windows SAPI speech synthesizer without extra pip packages
             safe_ps = clean.replace("'", "''").replace("\n", " ")[:600]
             cmd = (
                 "Add-Type -AssemblyName System.Speech; "
@@ -199,7 +252,7 @@ def listen_microphone_once() -> str | None:
     try:
         import speech_recognition as sr
     except ImportError:
-        print("[DOPE] SpeechRecognition package not installed; type your question/command in this window.")
+        print("[DOPE] SpeechRecognition not installed; type your question/command in this window.")
         return None
 
     recognizer = sr.Recognizer()
@@ -217,7 +270,7 @@ def listen_microphone_once() -> str | None:
         print("[DOPE] Could not understand speech clearly. Try again.")
         return None
     except Exception as exc:
-        print(f"[DOPE] Microphone capture unavailable ({exc}). You can type directly in this terminal.")
+        print(f"[DOPE] Microphone unavailable ({exc}). Type your command or question directly here.")
         return None
 
 
@@ -324,10 +377,7 @@ def handle_utterance(
 
 
 def register_global_hotkey(callback) -> str | None:
-    """
-    Register Alt+D+T globally across the entire OS desktop (home screen, any app).
-    Tries `keyboard` first, then falls back to `pynput`.
-    """
+    """Register Alt+D+T globally across the entire OS desktop (home screen, any app)."""
     try:
         import keyboard
 

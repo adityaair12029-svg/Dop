@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BookOpen, Check, Code2, Copy, Download, Laptop, Puzzle, Upload } from 'lucide-react';
+import { downloadVerifiedZip } from '../lib/downloadZip';
 
 interface PlatformFile {
   platform: string;
@@ -42,82 +43,11 @@ export const PlatformStudio: React.FC = () => {
   const [iconVersion, setIconVersion] = useState<number>(1);
   const [iconLoadError, setIconLoadError] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
-  const [downloadingZip, setDownloadingZip] = useState(false);
-  const [downloadingDesktopZip, setDownloadingDesktopZip] = useState(false);
+  const [downloadingExt, setDownloadingExt] = useState(false);
+  const [downloadingDesk, setDownloadingDesk] = useState(false);
+  const [copiedCmd, setCopiedCmd] = useState(false);
   const [logoStatus, setLogoStatus] = useState<{ ok: boolean; text: string } | null>(null);
   const [desktopStatus, setDesktopStatus] = useState<{ ok: boolean; text: string } | null>(null);
-
-  const handleDownloadExtensionZip = async () => {
-    setDownloadingZip(true);
-    setLogoStatus(null);
-    try {
-      const res = await fetch(`/api/dope/extension.zip?v=${iconVersion}`);
-      if (!res.ok) {
-        throw new Error(`Server returned HTTP ${res.status} while building extension ZIP.`);
-      }
-      const buf = await res.arrayBuffer();
-      const bytes = new Uint8Array(buf);
-      if (bytes.length < 100 || bytes[0] !== 0x50 || bytes[1] !== 0x4b) {
-        throw new Error('Downloaded response was not a valid ZIP archive. Please retry.');
-      }
-      const blob = new Blob([buf], { type: 'application/zip' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'DOPE-Chrome-Extension.zip';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-      setLogoStatus({
-        ok: true,
-        text: 'DOPE-Chrome-Extension.zip downloaded. Right-click -> Extract All, then open chrome://extensions -> Developer mode -> Load unpacked and select the extracted folder.',
-      });
-    } catch (err: unknown) {
-      setLogoStatus({
-        ok: false,
-        text: err instanceof Error ? err.message : 'Failed to download extension ZIP.',
-      });
-    } finally {
-      setDownloadingZip(false);
-    }
-  };
-
-  const handleDownloadDesktopZip = async () => {
-    setDownloadingDesktopZip(true);
-    setDesktopStatus(null);
-    try {
-      const res = await fetch('/api/dope/desktop.zip');
-      if (!res.ok) {
-        throw new Error(`Server returned HTTP ${res.status} while building Desktop Assistant ZIP.`);
-      }
-      const buf = await res.arrayBuffer();
-      const bytes = new Uint8Array(buf);
-      if (bytes.length < 100 || bytes[0] !== 0x50 || bytes[1] !== 0x4b) {
-        throw new Error('Downloaded response was not a valid ZIP archive. Please retry.');
-      }
-      const blob = new Blob([buf], { type: 'application/zip' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'DOPE-Desktop-Assistant.zip';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-      setDesktopStatus({
-        ok: true,
-        text: 'DOPE-Desktop-Assistant.zip downloaded. Extract All, then double-click Run-DOPE-Desktop.bat (Windows) or ./run_dope_desktop.sh (Mac/Linux). Press Alt+D+T anywhere on your laptop!',
-      });
-    } catch (err: unknown) {
-      setDesktopStatus({
-        ok: false,
-        text: err instanceof Error ? err.message : 'Failed to download Desktop Assistant ZIP.',
-      });
-    } finally {
-      setDownloadingDesktopZip(false);
-    }
-  };
 
   useEffect(() => {
     fetch('/api/dope/docs')
@@ -320,12 +250,32 @@ export const PlatformStudio: React.FC = () => {
 
             <button
               type="button"
-              onClick={() => void handleDownloadExtensionZip()}
-              disabled={downloadingZip}
+              disabled={downloadingExt}
+              onClick={async () => {
+                setDownloadingExt(true);
+                setLogoStatus(null);
+                try {
+                  const info = await downloadVerifiedZip({
+                    kind: 'extension',
+                    cacheBust: iconVersion,
+                  });
+                  setLogoStatus({
+                    ok: true,
+                    text: `Downloaded ${info.filename} (${Math.round(info.byteLength / 1024)} KB, verified ZIP). Right-click -> Extract All, then open chrome://extensions -> Developer mode ON -> Load unpacked -> select the extracted folder.`,
+                  });
+                } catch (err: unknown) {
+                  setLogoStatus({
+                    ok: false,
+                    text: err instanceof Error ? err.message : 'Failed to download Chrome Extension ZIP.',
+                  });
+                } finally {
+                  setDownloadingExt(false);
+                }
+              }}
               className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 transition-colors whitespace-nowrap shrink-0"
             >
               <Download className="w-4 h-4" />
-              <span>{downloadingZip ? 'Preparing ZIP...' : 'Download Chrome Extension (.zip)'}</span>
+              <span>{downloadingExt ? 'Building Verified ZIP...' : 'Download Chrome Extension (.zip)'}</span>
             </button>
           </div>
         </div>
@@ -353,39 +303,71 @@ export const PlatformStudio: React.FC = () => {
             </div>
             <div>
               <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                DOPE Whole-Laptop Desktop Assistant (Home Screen &amp; All Apps)
+                DOPE Universal Laptop + Chrome Bundle (Home Screen &amp; All Apps)
               </h2>
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
-                Chrome extensions are restricted by Windows/macOS to browser tabs only. To activate DOPE on your{' '}
-                <strong>Windows Desktop Home Screen, File Explorer, VS Code, or when Chrome is closed</strong>, run this desktop companion: press{' '}
+                Includes <strong>both</strong> the updated Chrome Extension v1.3 (<code className="font-mono">manifest.json</code>) <strong>and</strong> the Windows/Mac/Linux Python Desktop Companion (<code className="font-mono">dope_companion.py</code>). Press{' '}
                 <kbd className="font-mono px-1 py-0.5 rounded border border-slate-300 dark:border-slate-700">
                   Alt+D+T
                 </kbd>{' '}
-                anywhere on your laptop for sweet harmonic chimes, laptop mic capture, AI Q&amp;A spoken aloud, and OS/window controls.
+                in Chrome tabs AND on your Windows Desktop Home Screen / File Explorer / VS Code!
               </p>
               <ol className="mt-3 text-xs text-slate-600 dark:text-slate-300 space-y-1 list-decimal list-inside">
                 <li>
                   Click <strong>Download Desktop Assistant (.zip)</strong> and extract it (Right-click &rarr; <strong>Extract All</strong>).
                 </li>
                 <li>
-                  Windows: double-click <code className="font-mono">Run-DOPE-Desktop.bat</code> (first run sets up Python packages automatically).
+                  In Chrome: <code className="font-mono">chrome://extensions</code> &rarr; <strong>Load unpacked</strong> &rarr; select the extracted folder.
                 </li>
                 <li>
-                  Press <kbd className="font-mono px-1 py-0.5 rounded border border-slate-300 dark:border-slate-700">Alt+D+T</kbd> on your desktop home screen or inside any app to speak or ask AI questions!
+                  For Windows Home Screen &amp; outside Chrome: run <code className="font-mono">python dope_companion.py</code> in that folder and press <kbd className="font-mono px-1 py-0.5 rounded border border-slate-300 dark:border-slate-700">Alt+D+T</kbd> anywhere!
                 </li>
               </ol>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={() => void handleDownloadDesktopZip()}
-              disabled={downloadingDesktopZip}
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText('python dope_companion.py');
+                  setCopiedCmd(true);
+                  setTimeout(() => setCopiedCmd(false), 1800);
+                } catch {
+                  // Ignore clipboard restrictions
+                }
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap shrink-0"
+            >
+              {copiedCmd ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedCmd ? 'Copied Command' : 'Copy Run Command'}</span>
+            </button>
+            <button
+              type="button"
+              disabled={downloadingDesk}
+              onClick={async () => {
+                setDownloadingDesk(true);
+                setDesktopStatus(null);
+                try {
+                  const info = await downloadVerifiedZip({ kind: 'desktop' });
+                  setDesktopStatus({
+                    ok: true,
+                    text: `Downloaded ${info.filename} (${Math.round(info.byteLength / 1024)} KB, verified ZIP). Extract All -> Load unpacked in chrome://extensions AND run python dope_companion.py for Desktop Home Screen!`,
+                  });
+                } catch (err: unknown) {
+                  setDesktopStatus({
+                    ok: false,
+                    text: err instanceof Error ? err.message : 'Failed to download Desktop Assistant ZIP.',
+                  });
+                } finally {
+                  setDownloadingDesk(false);
+                }
+              }}
               className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:opacity-90 disabled:opacity-60 transition-colors whitespace-nowrap shrink-0"
             >
               <Download className="w-4 h-4" />
-              <span>{downloadingDesktopZip ? 'Preparing ZIP...' : 'Download Desktop Assistant (.zip)'}</span>
+              <span>{downloadingDesk ? 'Building Verified ZIP...' : 'Download Desktop Assistant (.zip)'}</span>
             </button>
           </div>
         </div>

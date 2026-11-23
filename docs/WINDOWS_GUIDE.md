@@ -6,11 +6,11 @@
 - Optional for building an `.exe` installer: `pyinstaller` + Inno Setup 6
 
 ## 2. 1-Click Install & Run Across Whole Laptop (`Alt + D + T`)
-Because browser extensions cannot run on the Windows Desktop Home Screen or when Chrome is closed, use the **DOPE Whole-Laptop Desktop Assistant**:
+Because browser extensions cannot run on the Windows Desktop Home Screen or when Chrome is closed, use the **DOPE Whole-Laptop Desktop Assistant** (a standalone Python app — do **not** load it into `chrome://extensions`):
 1. In the DOPE web dashboard **Platforms** tab, click **Download Desktop Assistant (.zip)** (`DOPE-Desktop-Assistant.zip`).
 2. Right-click the ZIP &rarr; **Extract All...**.
-3. Double-click **`Run-DOPE-Desktop.bat`**.
-   - It automatically creates `.venv`, installs dependencies (`requests`, `keyboard`, `pynput`, `SpeechRecognition`, `pyttsx3`, `pywinauto`, `pycaw`), and connects to your DOPE backend URL.
+3. Open Command Prompt / PowerShell inside that folder and run `python dope_companion.py` (or double-click `dope_companion.py`).
+   - On first launch, DOPE automatically installs its required Python dependencies (`requests`, `keyboard`, `pynput`, `SpeechRecognition`, `pyttsx3`, `pywinauto`, `pycaw`) and connects to your DOPE backend URL.
 4. Press **`Alt + D + T`** anywhere on Windows — Desktop Home Screen, File Explorer, VS Code, or over any window!
    - Plays a sweet harmonic bell chime, opens your laptop microphone, answers any AI question out loud, opens URLs, launches apps, and controls windows & volume.
 

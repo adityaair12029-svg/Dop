@@ -547,6 +547,8 @@ export function registerRoutes(app: Express): void {
         : 'http://localhost:3000';
     const zip = await buildExtensionBundleZip(origin);
     res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Length', String(zip.length));
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('Content-Disposition', 'attachment; filename="DOPE-Chrome-Extension.zip"');
     res.send(zip);
@@ -562,6 +564,8 @@ export function registerRoutes(app: Express): void {
         : 'http://localhost:3000';
     const zip = await buildDesktopBundleZip(origin);
     res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Length', String(zip.length));
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('Content-Disposition', 'attachment; filename="DOPE-Desktop-Assistant.zip"');
     res.send(zip);

@@ -10,7 +10,7 @@ DOPE ships as a Manifest V3 Chrome & Edge Extension with a **Pi-style Voice Orb 
   - Open new tabs, switch tabs, duplicate, mute/unmute, go back/forward, reload, or close tabs
   - Scroll up/down/top/bottom, zoom in/out/reset, and minimize/maximize/restore Chrome windows
 - **Whole-Laptop / Windows Desktop Home Screen (`DOPE-Desktop-Assistant.zip`)**:
-  - Browser extensions are OS-sandboxed to Chrome/Edge tabs and cannot listen to hotkeys or launch OS microphones when Chrome is minimized or you are on the Windows Desktop home screen. Download **`DOPE-Desktop-Assistant.zip`** from the **Platforms** tab and double-click `Run-DOPE-Desktop.bat` to use **`Alt + D + T` everywhere on your laptop**!
+  - Browser extensions are OS-sandboxed to Chrome/Edge tabs and cannot listen to hotkeys or launch OS microphones when Chrome is minimized or you are on the Windows Desktop home screen. Download **`DOPE-Desktop-Assistant.zip`** from the **Platforms** tab, extract it, and run `python dope_companion.py` to use **`Alt + D + T` everywhere on your laptop**!
 
 ## 2. Customize Your Logo & Download (.zip)
 1. Open the DOPE web dashboard and go to the **Platforms** tab.

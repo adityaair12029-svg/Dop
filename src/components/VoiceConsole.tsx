@@ -27,6 +27,7 @@ import {
   speakText,
   type SpeechRecognitionLike,
 } from '../lib/speech';
+import { downloadVerifiedZip } from '../lib/downloadZip';
 
 export interface HistoryRecord {
   id: string;
@@ -121,6 +122,8 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
   const [micPermissionError, setMicPermissionError] = useState<string | null>(null);
   const [liveTranscript, setLiveTranscript] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [downloadBusy, setDownloadBusy] = useState<'extension' | 'desktop' | null>(null);
+  const [downloadNote, setDownloadNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [lastResult, setLastResult] = useState<{
     spoken_response: string;
     action: DopeAction;
@@ -797,74 +800,60 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
               <kbd className="font-mono px-1 py-0.5 rounded border border-slate-300 dark:border-slate-700">
                 Alt+D+T
               </kbd>{' '}
-              on any Chrome tab for voice + sweet chimes &amp; AI Q&amp;A. For your Windows Desktop Home Screen &amp; outside Chrome, run the Desktop Assistant (.zip).
+              on any Chrome tab for voice + sweet chimes &amp; AI Q&amp;A. Download <strong>Laptop Desktop App (.zip)</strong> to get <strong>both</strong> Chrome Extension v1.3 (<code className="font-mono">chrome://extensions</code> &rarr; Load unpacked) <strong>and</strong> <code className="font-mono">python dope_companion.py</code> for Windows Desktop Home Screen.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <button
                 type="button"
+                disabled={downloadBusy !== null}
                 onClick={async () => {
+                  setDownloadBusy('extension');
+                  setDownloadNote(null);
                   try {
-                    const res = await fetch('/api/dope/extension.zip');
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    const buf = await res.arrayBuffer();
-                    const bytes = new Uint8Array(buf);
-                    if (bytes.length < 100 || bytes[0] !== 0x50 || bytes[1] !== 0x4b) {
-                      throw new Error('Invalid ZIP response from server.');
-                    }
-                    const blob = new Blob([buf], { type: 'application/zip' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'DOPE-Chrome-Extension.zip';
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    setTimeout(() => URL.revokeObjectURL(url), 5000);
+                    const info = await downloadVerifiedZip({ kind: 'extension' });
+                    setDownloadNote({
+                      ok: true,
+                      text: `Downloaded ${info.filename} (${Math.round(info.byteLength / 1024)} KB). Extract All -> chrome://extensions -> Load unpacked.`,
+                    });
                   } catch (err) {
-                    setMicPermissionError(
-                      err instanceof Error
-                        ? `Extension download failed: ${err.message}`
-                        : 'Extension download failed.'
-                    );
+                    setDownloadNote({
+                      ok: false,
+                      text: err instanceof Error ? err.message : 'Extension download failed.',
+                    });
+                  } finally {
+                    setDownloadBusy(null);
                   }
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 whitespace-nowrap shrink-0"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 whitespace-nowrap shrink-0"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Chrome Extension (.zip)</span>
+                <span>{downloadBusy === 'extension' ? 'Downloading...' : 'Chrome Extension (.zip)'}</span>
               </button>
               <button
                 type="button"
+                disabled={downloadBusy !== null}
                 onClick={async () => {
+                  setDownloadBusy('desktop');
+                  setDownloadNote(null);
                   try {
-                    const res = await fetch('/api/dope/desktop.zip');
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    const buf = await res.arrayBuffer();
-                    const bytes = new Uint8Array(buf);
-                    if (bytes.length < 100 || bytes[0] !== 0x50 || bytes[1] !== 0x4b) {
-                      throw new Error('Invalid ZIP response from server.');
-                    }
-                    const blob = new Blob([buf], { type: 'application/zip' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'DOPE-Desktop-Assistant.zip';
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    setTimeout(() => URL.revokeObjectURL(url), 5000);
+                    const info = await downloadVerifiedZip({ kind: 'desktop' });
+                    setDownloadNote({
+                      ok: true,
+                      text: `Downloaded ${info.filename} (${Math.round(info.byteLength / 1024)} KB). Extract All -> Load unpacked in chrome://extensions AND run python dope_companion.py for Desktop Home Screen.`,
+                    });
                   } catch (err) {
-                    setMicPermissionError(
-                      err instanceof Error
-                        ? `Desktop download failed: ${err.message}`
-                        : 'Desktop download failed.'
-                    );
+                    setDownloadNote({
+                      ok: false,
+                      text: err instanceof Error ? err.message : 'Desktop download failed.',
+                    });
+                  } finally {
+                    setDownloadBusy(null);
                   }
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:opacity-90 whitespace-nowrap shrink-0"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:opacity-90 disabled:opacity-60 whitespace-nowrap shrink-0"
               >
                 <Laptop className="w-3.5 h-3.5" />
-                <span>Laptop Desktop App (.zip)</span>
+                <span>{downloadBusy === 'desktop' ? 'Downloading...' : 'Laptop Desktop App (.zip)'}</span>
               </button>
               {onOpenExtensionStudio && (
                 <button
@@ -876,6 +865,18 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                 </button>
               )}
             </div>
+            {downloadNote && (
+              <div
+                role="status"
+                className={`mt-2.5 rounded-lg border px-3 py-2 text-[11px] ${
+                  downloadNote.ok
+                    ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200'
+                    : 'border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/30 text-rose-900 dark:text-rose-200'
+                }`}
+              >
+                {downloadNote.text}
+              </div>
+            )}
           </section>
 
           <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">

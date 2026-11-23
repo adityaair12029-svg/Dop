@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "DOPE Assistant",
-  "version": "1.2.0",
-  "description": "Pi-inspired AI voice assistant for Chrome and Microsoft Edge. Press Alt+D or say 'Hey Dop' to control Chrome with voice & sound feedback.",
+  "version": "1.3.0",
+  "description": "Pi-inspired AI voice assistant for Chrome and Edge. Press Alt+D+T (or Alt+D) or say 'Hey Dop' to ask AI questions & control Chrome with sweet sound chimes.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

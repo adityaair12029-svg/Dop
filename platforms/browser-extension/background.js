@@ -369,9 +369,71 @@ function parseLocalCommand(rawText) {
   };
 }
 
+function evaluateSafeMath(exprText) {
+  const cleaned = exprText
+    .replace(/^(?:what is|calculate|solve|evaluate|kitna hota hai|batao)\s+/i, '')
+    .replace(/\b(?:plus|aur|jodo)\b/gi, '+')
+    .replace(/\b(?:minus|ghatao)\b/gi, '-')
+    .replace(/\b(?:times|into|multiplied by|guna|x)\b/gi, '*')
+    .replace(/\b(?:divided by|divide by|bhag)\b/gi, '/')
+    .replace(/\b(?:kitna hota hai|hota hai|kya hoga|equals|\?|=)\b/gi, '')
+    .trim();
+  if (!/^[\d\s+\-*/().%]+$/.test(cleaned) || !/\d/.test(cleaned) || !/[+\-*/%]/.test(cleaned)) {
+    return null;
+  }
+  const tokens = cleaned.match(/\d+(?:\.\d+)?|[+\-*/()%]/g);
+  if (!tokens) return null;
+  let pos = 0;
+  const peek = () => tokens[pos];
+  const eat = () => tokens[pos++];
+  function parseExpr() {
+    let val = parseTerm();
+    while (peek() === '+' || peek() === '-') {
+      const op = eat();
+      const r = parseTerm();
+      val = op === '+' ? val + r : val - r;
+    }
+    return val;
+  }
+  function parseTerm() {
+    let val = parseFactor();
+    while (peek() === '*' || peek() === '/' || peek() === '%') {
+      const op = eat();
+      const r = parseFactor();
+      if ((op === '/' || op === '%') && r === 0) throw new Error('div0');
+      val = op === '*' ? val * r : op === '/' ? val / r : val % r;
+    }
+    return val;
+  }
+  function parseFactor() {
+    const t = peek();
+    if (t === '-') { eat(); return -parseFactor(); }
+    if (t === '+') { eat(); return parseFactor(); }
+    if (t === '(') {
+      eat();
+      const v = parseExpr();
+      if (eat() !== ')') throw new Error('paren');
+      return v;
+    }
+    if (t && /^\d+(?:\.\d+)?$/.test(t)) { eat(); return Number(t); }
+    throw new Error('token');
+  }
+  try {
+    const val = parseExpr();
+    if (pos !== tokens.length || !Number.isFinite(val)) return null;
+    const rounded = Number.isInteger(val) ? String(val) : String(Number(val.toFixed(6)));
+    return `${cleaned} = ${rounded}.`;
+  } catch {
+    return null;
+  }
+}
+
 async function localAnswerQuestionFallback(cleanText) {
   const clean = normalizeHinglish(cleanText);
   const lower = clean.toLowerCase();
+
+  const mathAns = evaluateSafeMath(clean);
+  if (mathAns) return mathAns;
 
   if (/(?:what(?:'s| is) the time|current time|time kya|kitna baja|kitne baje)/i.test(lower)) {
     const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
