@@ -22,6 +22,7 @@ import {
   type PendingPairingRecord,
 } from './components/DeviceManager';
 import { PlatformStudio } from './components/PlatformStudio';
+import { ExtensionInstallModal } from './components/ExtensionInstallModal';
 import { SettingsPanel, type AssistantSettingsState } from './components/SettingsPanel';
 import {
   isJsonResponse,
@@ -73,6 +74,8 @@ export default function App() {
     connected_devices: number;
     catalog_count: number;
   } | null>(null);
+  const [apiOnline, setApiOnline] = useState<boolean>(false);
+  const [installModalOpen, setInstallModalOpen] = useState<boolean>(false);
 
   const [gmailMessages, setGmailMessages] = useState<GmailMessageItem[]>([]);
   const [gmailLoading, setGmailLoading] = useState(false);
@@ -119,10 +122,14 @@ export default function App() {
         }
         if (healthRes && isJsonResponse(healthRes)) {
           setHealthInfo(await healthRes.json());
+          setApiOnline(true);
+          return;
         }
+        setApiOnline(false);
         return;
       }
 
+      setApiOnline(Boolean(healthRes && isJsonResponse(healthRes)));
       const local = loadLocalState();
       setHistory(local.history);
       setAliases(local.aliases);
@@ -135,6 +142,7 @@ export default function App() {
         catalog_count: 25,
       });
     } catch {
+      setApiOnline(false);
       const local = loadLocalState();
       setHistory(local.history);
       setAliases(local.aliases);
@@ -144,8 +152,43 @@ export default function App() {
     }
   }, []);
 
+  const checkApiHealth = useCallback(async () => {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      setApiOnline(false);
+      return;
+    }
+    try {
+      const res = await fetch('/api/dope/health', {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(2500),
+      });
+      if (isJsonResponse(res)) {
+        const data = (await res.json()) as {
+          gemini_configured: boolean;
+          connected_devices: number;
+          catalog_count: number;
+        };
+        setHealthInfo(data);
+        setApiOnline(true);
+        return;
+      }
+      setApiOnline(false);
+    } catch {
+      setApiOnline(false);
+    }
+  }, []);
+
   useEffect(() => {
     void loadWorkspaceData();
+    void checkApiHealth();
+    const interval = window.setInterval(() => {
+      void checkApiHealth();
+    }, 15000);
+    const onOnline = () => void checkApiHealth();
+    const onOffline = () => setApiOnline(false);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+
     const unsubscribe = initAuth(
       (acc, token) => {
         setAccount(acc);
@@ -158,8 +201,13 @@ export default function App() {
         setGmailMessages([]);
       }
     );
-    return () => unsubscribe();
-  }, [loadWorkspaceData]);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+      unsubscribe();
+    };
+  }, [loadWorkspaceData, checkApiHealth]);
 
   const fetchGmailInbox = useCallback(
     async (explicitToken?: string) => {
@@ -262,6 +310,7 @@ export default function App() {
       const res = await fetch('/api/dope/command', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(3000),
         body: JSON.stringify({
           text,
           language: settings.language,
@@ -271,9 +320,10 @@ export default function App() {
       });
       if (isJsonResponse(res)) {
         data = await res.json();
+        setApiOnline(true);
       }
     } catch {
-      // Fall back smoothly when no Express backend is present (e.g. Vercel static hosting)
+      // Fall back smoothly when no Express backend is present or request times out
     }
 
     if (!data) {
@@ -365,6 +415,7 @@ export default function App() {
         onSelectTab={setActiveTab}
         account={account}
         hasGmailToken={Boolean(gmailToken)}
+        apiOnline={apiOnline}
         theme={settings.theme}
         onToggleTheme={() =>
           void handleUpdateSettings({ theme: settings.theme === 'dark' ? 'light' : 'dark' })
@@ -425,6 +476,7 @@ export default function App() {
               }}
               onSubmitCommand={handleSubmitCommand}
               onOpenExtensionStudio={() => setActiveTab('platforms')}
+              onOpenInstallModal={() => setInstallModalOpen(true)}
             />
           )}
 
@@ -545,6 +597,12 @@ export default function App() {
         busy={confirmBusy}
         onConfirm={() => void handleConfirmDecision('confirm')}
         onCancel={() => void handleConfirmDecision('cancel')}
+      />
+
+      <ExtensionInstallModal
+        open={installModalOpen}
+        onClose={() => setInstallModalOpen(false)}
+        onOpenPlatformStudio={() => setActiveTab('platforms')}
       />
     </div>
   );

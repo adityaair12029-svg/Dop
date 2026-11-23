@@ -1,5 +1,5 @@
 """
-Windows 10/11 Native Automation Adapter using Win32 + Windows UI Automation (pywinauto) + pycaw.
+Windows 10/11 Native Automation Adapter using Win32 + UI Automation + pyautogui.
 Only allowlisted, structured actions are permitted; arbitrary shell commands are rejected.
 """
 
@@ -7,20 +7,51 @@ from __future__ import annotations
 import ctypes
 import os
 import subprocess
+import time
 import webbrowser
 from typing import Any
 
-APPROVED_APPS = {
+APPROVED_APPS: dict[str, list[str]] = {
     "chrome": [
         r"C:\Program Files\Google\Chrome\Application\chrome.exe",
         r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
     ],
+    "firefox": [
+        r"C:\Program Files\Mozilla Firefox\firefox.exe",
+        r"C:\Program Files (x86)\Mozilla Firefox\firefox.exe",
+    ],
     "edge": [
         r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+    ],
+    "brave": [
+        r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
+        r"C:\Program Files (x86)\BraveSoftware\Brave-Browser\Application\brave.exe",
+    ],
+    "whatsapp": ["whatsapp:"],
+    "vscode": [
+        os.path.expandvars(r"%LOCALAPPDATA%\Programs\Microsoft VS Code\Code.exe"),
+        r"C:\Program Files\Microsoft VS Code\Code.exe",
+    ],
+    "code": [
+        os.path.expandvars(r"%LOCALAPPDATA%\Programs\Microsoft VS Code\Code.exe"),
+        r"C:\Program Files\Microsoft VS Code\Code.exe",
+    ],
+    "spotify": [
+        os.path.expandvars(r"%APPDATA%\Spotify\Spotify.exe"),
+        "spotify:",
+    ],
+    "discord": [
+        os.path.expandvars(r"%LOCALAPPDATA%\Discord\Update.exe"),
+        "discord:",
+    ],
+    "telegram": [
+        os.path.expandvars(r"%APPDATA%\Telegram Desktop\Telegram.exe"),
     ],
     "notepad": ["notepad.exe"],
     "calculator": ["calc.exe"],
     "explorer": ["explorer.exe"],
+    "terminal": ["wt.exe", "cmd.exe"],
 }
 
 
@@ -44,6 +75,24 @@ class WindowsAdapter:
             webbrowser.open(target)
             return {"ok": True, "message": f"Opened {target}"}
 
+        if action == "web_workflow":
+            if not str(target).startswith(("https://", "http://")):
+                return {"ok": False, "message": "Blocked unsafe URL scheme."}
+            webbrowser.open(target)
+            wf_type = params.get("workflow_type")
+            prompt_text = str(params.get("prompt_text") or "").strip()
+            if wf_type == "type_prompt" and prompt_text:
+                time.sleep(2.4)
+                try:
+                    import pyautogui
+
+                    pyautogui.write(prompt_text, interval=0.015)
+                    pyautogui.press("enter")
+                    return {"ok": True, "message": f"Opened {target} and submitted prompt."}
+                except Exception as exc:
+                    return {"ok": True, "message": f"Opened {target} (type manually: {exc})."}
+            return {"ok": True, "message": f"Opened workflow target {target}."}
+
         if action == "open_app":
             key = str(target).strip().lower()
             candidates = APPROVED_APPS.get(key)
@@ -53,10 +102,42 @@ class WindowsAdapter:
                     "message": f'Application "{target}" is not in the approved Windows app registry.',
                 }
             for exe in candidates:
+                if exe.endswith(":"):
+                    os.startfile(exe)  # noqa: S606
+                    return {"ok": True, "message": f"Launched {target}."}
                 if exe.endswith(".exe") and (not os.path.isabs(exe) or os.path.exists(exe)):
                     subprocess.Popen([exe], shell=False)
                     return {"ok": True, "message": f"Launched {target}."}
             return {"ok": False, "message": f"{target} does not appear to be installed."}
+
+        if action in ("undo", "redo"):
+            try:
+                import pyautogui
+
+                pyautogui.hotkey("ctrl", "z" if action == "undo" else "y")
+                return {"ok": True, "message": f"Sent Ctrl+{'Z' if action == 'undo' else 'Y'} globally."}
+            except Exception:
+                import keyboard
+
+                keyboard.press_and_release("ctrl+z" if action == "undo" else "ctrl+y")
+                return {"ok": True, "message": f"Executed system {action}."}
+
+        if action == "scroll":
+            direction = params.get("direction", "down")
+            try:
+                import pyautogui
+
+                if direction == "top":
+                    pyautogui.hotkey("ctrl", "home")
+                elif direction == "bottom":
+                    pyautogui.hotkey("ctrl", "end")
+                elif direction == "up":
+                    pyautogui.scroll(600)
+                else:
+                    pyautogui.scroll(-600)
+                return {"ok": True, "message": f"Scrolled {direction} across active window."}
+            except Exception as exc:
+                return {"ok": False, "message": f"Windows scroll failed: {exc}"}
 
         if action in ("minimize_window", "maximize_window", "restore_window", "close_window"):
             user32 = ctypes.windll.user32

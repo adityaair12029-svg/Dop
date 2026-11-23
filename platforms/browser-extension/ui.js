@@ -337,7 +337,7 @@ function startListening(useWakeWord) {
   isListening = true;
   recognition = new SpeechCtor();
   recognition.continuous = useWakeWord;
-  recognition.interimResults = false;
+  recognition.interimResults = true;
   recognition.lang = selectedLang || 'en-US';
 
   micBtn.classList.add('listening');
@@ -346,13 +346,17 @@ function startListening(useWakeWord) {
   wakeBtn.textContent = useWakeWord ? 'Stop "Hey El Dorado"' : 'Hey El Dorado Mode';
   statusEl.textContent = useWakeWord ? 'Waiting for "Hey El Dorado"...' : 'Listening... Speak now';
   subEl.textContent = useWakeWord
-    ? 'Say "Hey El Dorado, open YouTube" or "Hey El Dorado, scroll down"'
+    ? 'Say "Hey El Dorado, open YouTube" or "Hey El Dorado, scroll"'
     : 'Listening for your voice command or question';
 
   recognition.onresult = (event) => {
     const last = event.results[event.results.length - 1];
     const transcript = (last?.[0]?.transcript || '').trim();
     if (!transcript) return;
+    if (!last.isFinal) {
+      subEl.textContent = transcript;
+      return;
+    }
     if (wakeMode) {
       if (/^\s*(?:hey|hi|ok|okay|hello)\s+(?:el\s*dorado|eldorado|el-dorado|dop|dope|daap)\b/i.test(transcript)) {
         runCommand(transcript);

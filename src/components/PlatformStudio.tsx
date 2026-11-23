@@ -212,18 +212,18 @@ export const PlatformStudio: React.FC = () => {
       <section className="rounded-2xl border border-black/10 dark:border-white/[0.08] bg-[#F7F8FA] dark:bg-[#0D0D10] p-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#070708] flex items-center justify-center overflow-hidden shrink-0">
+            <div className="w-16 h-16 rounded-2xl border border-black/10 dark:border-white/10 bg-[#0B0C0F] flex items-center justify-center overflow-hidden shrink-0">
               {localPreviewSrc ? (
                 <img
                   src={localPreviewSrc}
                   alt="El Dorado Extension Logo Preview"
-                  className="w-14 h-14 object-contain"
+                  className="w-12 h-12 object-contain"
                 />
               ) : !iconLoadError ? (
                 <img
                   src={`/downloads/el-dorado-icon-128.png?v=${iconVersion}`}
                   alt="El Dorado Extension Logo Preview"
-                  className="w-14 h-14 object-contain"
+                  className="w-12 h-12 object-contain"
                   onError={() => setIconLoadError(true)}
                 />
               ) : (
@@ -232,7 +232,7 @@ export const PlatformStudio: React.FC = () => {
             </div>
             <div>
               <h2 className="text-base font-semibold text-[#0A0A0C] dark:text-white">
-                El Dorado Chrome &amp; Edge Extension (v1.5)
+                El Dorado Chrome &amp; Edge Extension (v1.5.1)
               </h2>
               <p className="text-xs text-[#5F6368] dark:text-neutral-400 mt-1 max-w-2xl leading-relaxed">
                 Includes full dark &amp; light theme inside popup, side panel, and on-page{' '}
@@ -343,7 +343,7 @@ export const PlatformStudio: React.FC = () => {
                 El Dorado Universal Laptop + Chrome Bundle (Home Screen &amp; All Apps)
               </h2>
               <p className="text-xs text-[#5F6368] dark:text-neutral-400 mt-1 max-w-2xl leading-relaxed">
-                Includes <strong>both</strong> the El Dorado Chrome Extension v1.5 (<code className="font-mono">manifest.json</code>) <strong>and</strong> the Windows/Mac/Linux Python Desktop Companion (<code className="font-mono">el_dorado_companion.py</code>). Press{' '}
+                Includes <strong>both</strong> the El Dorado Chrome Extension v1.5.1 (<code className="font-mono">manifest.json</code>) <strong>and</strong> the Windows/Mac/Linux Python Desktop Companion (<code className="font-mono">el_dorado_companion.py</code>). Press{' '}
                 <kbd className="font-mono px-1.5 py-0.5 rounded border border-black/10 dark:border-white/15 text-[#0A0A0C] dark:text-white">
                   Alt+D+T
                 </kbd>{' '}

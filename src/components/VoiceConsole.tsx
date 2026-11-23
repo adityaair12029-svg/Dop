@@ -34,7 +34,6 @@ import {
 } from '../lib/speech';
 import { downloadVerifiedZip } from '../lib/downloadZip';
 import { AntigravityParticles } from './AntigravityParticles';
-import { AntigravityMark } from './AntigravityMark';
 
 export interface HistoryRecord {
   id: string;
@@ -94,6 +93,7 @@ interface VoiceConsoleProps {
   } | null>;
   onActionResultApplied?: (msg: string) => void;
   onOpenExtensionStudio?: () => void;
+  onOpenInstallModal?: () => void;
 }
 
 const STARTER_ACTIONS = [
@@ -137,6 +137,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
   onRequestGoogleSignIn,
   onSubmitCommand,
   onOpenExtensionStudio,
+  onOpenInstallModal,
 }) => {
   const [inputText, setInputText] = useState('');
   const [targetPlatform, setTargetPlatform] = useState<DopePlatform>('web');
@@ -289,15 +290,14 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
 
       if (isAltDT || isCtrlShiftD) {
         e.preventDefault();
+        if (Date.now() - lastChordAt > 240) {
+          lastChordAt = Date.now();
+          triggerVoiceToggle();
+        }
+      } else if (isAltDOnly && Date.now() - lastChordAt > 240) {
+        e.preventDefault();
         lastChordAt = Date.now();
         triggerVoiceToggle();
-      } else if (isAltDOnly && Date.now() - lastChordAt > 500) {
-        e.preventDefault();
-        setTimeout(() => {
-          if (!pressed.has('t') && Date.now() - lastChordAt > 250) {
-            triggerVoiceToggle();
-          }
-        }, 160);
       }
     };
 
@@ -325,8 +325,27 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
     }
 
     if (action.action === 'scroll' && pdfScrollRef.current) {
-      const dy = action.parameters?.direction === 'up' ? -220 : 220;
-      pdfScrollRef.current.scrollBy({ top: dy, behavior: 'smooth' });
+      const dir = action.parameters?.direction;
+      if (dir === 'top') {
+        pdfScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (dir === 'bottom') {
+        pdfScrollRef.current.scrollTo({ top: pdfScrollRef.current.scrollHeight, behavior: 'smooth' });
+      } else {
+        const dy = dir === 'up' ? -220 : 220;
+        pdfScrollRef.current.scrollBy({ top: dy, behavior: 'smooth' });
+      }
+    } else if (action.action === 'undo') {
+      try {
+        document.execCommand('undo');
+      } catch {
+        // Browser editor undo fallback
+      }
+    } else if (action.action === 'redo') {
+      try {
+        document.execCommand('redo');
+      } catch {
+        // Browser editor redo fallback
+      }
     } else if (action.action === 'zoom') {
       const dir = action.parameters?.direction;
       setPdfFitMode('custom');
@@ -612,8 +631,12 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
             />
 
             <div className="relative z-10 flex flex-col items-center">
-              <div className="ag-float mb-4 text-[#0A0A0C]/20 dark:text-white/25">
-                <AntigravityMark variant="monochrome" className="w-12 h-12" />
+              <div className="ag-float mb-4 w-12 h-12 rounded-2xl bg-[#0B0C0F] border border-black/10 dark:border-white/15 flex items-center justify-center shadow-sm">
+                <img
+                  src="/el-dorado-logo.png"
+                  alt="El Dorado logo"
+                  className="w-8 h-8 object-contain"
+                />
               </div>
 
               <h1 className="text-[26px] sm:text-[32px] font-medium tracking-[-0.025em] text-center text-[#0A0A0C] dark:text-white leading-tight text-balance">
@@ -800,7 +823,8 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                 )}
 
                 {(lastResult.action.action === 'open_url' ||
-                  lastResult.action.action === 'web_search') &&
+                  lastResult.action.action === 'web_search' ||
+                  lastResult.action.action === 'web_workflow') &&
                   lastResult.action.target &&
                   lastResult.status === 'executed' && (
                     <div className="space-y-1.5">
@@ -814,7 +838,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                         <span>Open {lastResult.action.target}</span>
                       </a>
                       <p className="text-[11px] text-[#5F6368] dark:text-neutral-400">
-                        Install the El Dorado Chrome Extension (.zip) to auto-open tabs, switch tabs, scroll, and control Chrome windows directly.
+                        Use the El Dorado Chrome Extension (.zip) with Developer Mode to auto-open tabs, type AI prompts, navigate pages, and control Chrome windows directly.
                       </p>
                     </div>
                   )}
@@ -882,7 +906,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
               )}
             </div>
             <p className="mt-3 text-xs text-[#5F6368] dark:text-neutral-400 leading-relaxed">
-              Chrome &amp; Edge Extension v1.5 with floating voice orb, harmonic chimes, and AI Q&amp;A. Press{' '}
+              Chrome &amp; Edge Extension v1.5.1 with floating voice orb, harmonic chimes, and AI Q&amp;A. Press{' '}
               <kbd className="font-mono px-1.5 py-0.5 rounded border border-black/10 dark:border-white/15 text-[#0A0A0C] dark:text-white">
                 Alt+D+T
               </kbd>{' '}
@@ -912,10 +936,10 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                     setDownloadBusy(null);
                   }
                 }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-full bg-[#2F75C3] dark:bg-[#2F71E3] text-white hover:opacity-90 disabled:opacity-60 transition-opacity whitespace-nowrap shrink-0 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-full bg-[#2F75C3] dark:bg-[#2F71E3] text-white hover:opacity-90 disabled:opacity-60 transition-opacity whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>{downloadBusy === 'extension' ? 'Downloading...' : 'El Dorado Extension (.zip)'}</span>
+                <span>{downloadBusy === 'extension' ? 'Downloading...' : 'Extension (.zip)'}</span>
               </button>
               <button
                 type="button"
@@ -940,16 +964,16 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                     setDownloadBusy(null);
                   }
                 }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-full bg-[#0A0A0C] text-white dark:bg-white dark:text-[#070708] hover:opacity-90 disabled:opacity-60 transition-opacity whitespace-nowrap shrink-0 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-full bg-[#0A0A0C] text-white dark:bg-white dark:text-[#070708] hover:opacity-90 disabled:opacity-60 transition-opacity whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <Laptop className="w-3.5 h-3.5" />
-                <span>{downloadBusy === 'desktop' ? 'Downloading...' : 'Laptop Desktop App (.zip)'}</span>
+                <span>{downloadBusy === 'desktop' ? 'Downloading...' : 'Desktop App (.zip)'}</span>
               </button>
-              {onOpenExtensionStudio && (
+              {(onOpenInstallModal || onOpenExtensionStudio) && (
                 <button
                   type="button"
-                  onClick={onOpenExtensionStudio}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-full border border-black/15 dark:border-white/15 text-[#0A0A0C] dark:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                  onClick={onOpenInstallModal ?? onOpenExtensionStudio}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-full border border-black/15 dark:border-white/15 text-[#0A0A0C] dark:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   <span>Install Steps</span>
                 </button>

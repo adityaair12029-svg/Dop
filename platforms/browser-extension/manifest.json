@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "El Dorado Assistant",
-  "version": "1.5.0",
-  "description": "AI voice assistant for Chrome and Edge. Press Alt+D+T (or Alt+D) or say 'Hey El Dorado' to ask AI questions & control Chrome with harmonic chimes.",
+  "version": "1.5.1",
+  "description": "Ultra-fast AI voice assistant for Chrome and Edge. Press Alt+D+T (or Alt+D) or say 'Hey El Dorado' anywhere.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -40,7 +40,14 @@
     {
       "matches": ["http://*/*", "https://*/*"],
       "js": ["hotkey_content.js"],
+      "all_frames": true,
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*.png"],
+      "matches": ["<all_urls>"]
     }
   ],
   "commands": {

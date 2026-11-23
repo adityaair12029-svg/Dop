@@ -4,6 +4,7 @@ const DEFAULT_SERVER_URL = '__DOPE_SERVER_URL__';
 const ALLOWED_EXTENSION_ACTIONS = new Set([
   'open_url',
   'web_search',
+  'web_workflow',
   'new_tab',
   'switch_tab',
   'reload_tab',
@@ -13,6 +14,8 @@ const ALLOWED_EXTENSION_ACTIONS = new Set([
   'unmute_tab',
   'duplicate_tab',
   'scroll',
+  'undo',
+  'redo',
   'zoom',
   'pdf_navigate_page',
   'pdf_fit',
@@ -36,7 +39,14 @@ const KNOWN_SITES = {
   wikipedia: 'https://www.wikipedia.org',
   reddit: 'https://www.reddit.com',
   chatgpt: 'https://chatgpt.com',
+  gpt: 'https://chatgpt.com',
+  openai: 'https://chatgpt.com',
   gemini: 'https://gemini.google.com',
+  claude: 'https://claude.ai',
+  perplexity: 'https://www.perplexity.ai',
+  firebase: 'https://console.firebase.google.com',
+  vercel: 'https://vercel.com/dashboard',
+  notion: 'https://www.notion.so',
   instagram: 'https://www.instagram.com',
   insta: 'https://www.instagram.com',
   whatsapp: 'https://web.whatsapp.com',
@@ -73,6 +83,41 @@ function isSafeHttpUrl(raw) {
   }
 }
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 1800) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+async function injectContentScriptIntoOpenTabs() {
+  try {
+    const tabs = await chrome.tabs.query({ url: ['http://*/*', 'https://*/*'] });
+    for (const tab of tabs) {
+      if (!tab.id) continue;
+      chrome.scripting
+        .executeScript({
+          target: { tabId: tab.id, allFrames: true },
+          files: ['hotkey_content.js'],
+        })
+        .catch(() => {});
+    }
+  } catch {
+    // Ignore tabs unavailable during startup
+  }
+}
+
+chrome.runtime.onInstalled.addListener(() => {
+  void injectContentScriptIntoOpenTabs();
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  void injectContentScriptIntoOpenTabs();
+});
+
 function normalizeHinglish(raw) {
   let text = String(raw || '')
     .trim()
@@ -93,6 +138,19 @@ function normalizeHinglish(raw) {
   return text.trim();
 }
 
+function resolveSiteUrl(rawSite) {
+  const cleaned = String(rawSite || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^(?:the|my|website|site|app)\s+/i, '')
+    .replace(/[.!?]+$/, '');
+  const key = cleaned.replace(/\s+/g, '');
+  if (KNOWN_SITES[key]) return KNOWN_SITES[key];
+  if (/^https?:\/\//i.test(cleaned)) return cleaned;
+  if (/^[a-z0-9-]+(?:\.[a-z]{2,})+(?:\/\S*)?$/i.test(cleaned)) return `https://${cleaned}`;
+  return null;
+}
+
 function parseLocalCommand(rawText) {
   const clean = normalizeHinglish(rawText);
   const lower = clean.toLowerCase();
@@ -109,6 +167,20 @@ function parseLocalCommand(rawText) {
       isDirectMatch: true,
       action: { action: 'stop_listening', platform: 'browser_extension', requires_confirmation: false },
       spoken_response: 'Voice listening stopped.',
+    };
+  }
+  if (/^(?:undo(?:\s+(?:this|that|it|last))?|step\s+back|undo\s+karo|wapas\s+karo|piche\s+karo)[.!?]*$/i.test(lower)) {
+    return {
+      isDirectMatch: true,
+      action: { action: 'undo', platform: 'browser_extension', requires_confirmation: false },
+      spoken_response: 'Undoing the last action.',
+    };
+  }
+  if (/^(?:redo(?:\s+(?:this|that|it))?|redo\s+karo)[.!?]*$/i.test(lower)) {
+    return {
+      isDirectMatch: true,
+      action: { action: 'redo', platform: 'browser_extension', requires_confirmation: false },
+      spoken_response: 'Redoing the action.',
     };
   }
   if (/(?:new\s+tab|naya\s+tab)/i.test(lower)) {
@@ -153,32 +225,32 @@ function parseLocalCommand(rawText) {
       spoken_response: 'Muting this tab.',
     };
   }
-  if (/scroll\s+(?:to\s+)?bottom|sabse\s+neeche/i.test(lower)) {
+  if (/\b(?:scroll\s+(?:to\s+)?bottom|sabse\s+neeche)\b/i.test(lower)) {
     return {
       isDirectMatch: true,
       action: { action: 'scroll', platform: 'browser_extension', requires_confirmation: false, parameters: { direction: 'bottom' } },
       spoken_response: 'Scrolling to bottom.',
     };
   }
-  if (/scroll\s+(?:to\s+)?top|sabse\s+upar/i.test(lower)) {
+  if (/\b(?:scroll\s+(?:to\s+)?top|sabse\s+upar)\b/i.test(lower)) {
     return {
       isDirectMatch: true,
       action: { action: 'scroll', platform: 'browser_extension', requires_confirmation: false, parameters: { direction: 'top' } },
       spoken_response: 'Scrolling to top.',
     };
   }
-  if (/scroll\s+down|neeche\s+jao/i.test(lower)) {
-    return {
-      isDirectMatch: true,
-      action: { action: 'scroll', platform: 'browser_extension', requires_confirmation: false, parameters: { direction: 'down' } },
-      spoken_response: 'Scrolling down.',
-    };
-  }
-  if (/scroll\s+up|upar\s+jao/i.test(lower)) {
+  if (/\b(?:scroll\s+up|scroll\s+above|upar\s+jao)\b/i.test(lower)) {
     return {
       isDirectMatch: true,
       action: { action: 'scroll', platform: 'browser_extension', requires_confirmation: false, parameters: { direction: 'up' } },
       spoken_response: 'Scrolling up.',
+    };
+  }
+  if (/^(?:scroll(?:\s+(?:down|page|this|please|karo))?|please\s+scroll|scroll\s+the\s+page)$/i.test(lower) || /\b(?:scroll\s+down|neeche\s+jao)\b/i.test(lower)) {
+    return {
+      isDirectMatch: true,
+      action: { action: 'scroll', platform: 'browser_extension', requires_confirmation: false, parameters: { direction: 'down' } },
+      spoken_response: 'Scrolling down.',
     };
   }
   if (/zoom\s+in/i.test(lower)) {
@@ -249,6 +321,97 @@ function parseLocalCommand(rawText) {
       isDirectMatch: true,
       action: { action: 'close_window', platform: 'browser_extension', requires_confirmation: false },
       spoken_response: 'Closing current tab.',
+    };
+  }
+
+  // Compound multi-step workflows (WhatsApp message, ChatGPT prompt, Flipkart/Amazon orders/cart, open+action)
+  const waMatch =
+    clean.match(/(?:open\s+)?whatsapp(?:\s+(?:web|app))?(?:\s+and)?\s+(?:send|message|msg|type)\s+(?:a\s+message\s+)?["']?(.+?)["']?\s+to\s+([a-z0-9 ._'-]+)[.!?]*$/i) ||
+    clean.match(/(?:open\s+)?whatsapp(?:\s+(?:web|app))?(?:\s+and)?\s+(?:message|msg|text)\s+([a-z0-9 ._'-]+?)\s+(?:saying|with|hi|hello)?\s*["']?(.+?)["']?[.!?]*$/i) ||
+    clean.match(/send\s+["']?(.+?)["']?\s+to\s+([a-z0-9 ._'-]+?)\s+(?:on|in)\s+whatsapp[.!?]*$/i);
+  if (waMatch) {
+    const isMsgSecond = /message|msg|text/i.test(clean) && !/\bto\b/i.test(clean);
+    const msgText = (isMsgSecond ? waMatch[2] : waMatch[1] || 'Hi').trim();
+    const recipient = (isMsgSecond ? waMatch[1] : waMatch[2] || '').trim();
+    return {
+      isDirectMatch: true,
+      action: {
+        action: 'web_workflow',
+        target: 'https://web.whatsapp.com',
+        platform: 'browser_extension',
+        requires_confirmation: false,
+        parameters: {
+          workflow_type: 'whatsapp_send',
+          recipient,
+          message_text: msgText,
+        },
+      },
+      spoken_response: `Opening WhatsApp and sending "${msgText}" to ${recipient}.`,
+    };
+  }
+
+  const aiPromptMatch = clean.match(
+    /^(?:open\s+)?(chat\s*gpt|gpt|openai|gemini|claude|perplexity)\s*(?:and\s+)?(?:type|write|ask|enter|submit|send)?(?:\s+a)?(?:\s+prompt)?[\s:,-]+["']?(.+?)["']?[.!?]*$/i
+  );
+  if (aiPromptMatch && aiPromptMatch[2]?.trim()) {
+    const siteKey = aiPromptMatch[1].toLowerCase().replace(/\s+/g, '');
+    const promptText = aiPromptMatch[2].trim();
+    const targetUrl = resolveSiteUrl(siteKey) || 'https://chatgpt.com';
+    return {
+      isDirectMatch: true,
+      action: {
+        action: 'web_workflow',
+        target: targetUrl,
+        platform: 'browser_extension',
+        requires_confirmation: false,
+        parameters: {
+          workflow_type: 'type_prompt',
+          prompt_text: promptText,
+        },
+      },
+      spoken_response: `Opening ${aiPromptMatch[1].trim()} and typing "${promptText}".`,
+    };
+  }
+
+  const compoundMatch = clean.match(
+    /^open\s+([a-z0-9 .-]+?)\s+(?:and\s+(?:go\s+to|open|click|search(?:\s+for)?|find|type)|go\s+to|search(?:\s+for)?)\s+(.+?)[.!?]*$/i
+  );
+  if (compoundMatch) {
+    const rawSite = compoundMatch[1].trim();
+    const subCommand = compoundMatch[2].trim();
+    const siteKey = rawSite.toLowerCase().replace(/\s+/g, '');
+    let targetUrl = resolveSiteUrl(rawSite) || `https://${siteKey}.com`;
+    let workflowType = 'click_target';
+
+    if (siteKey === 'flipkart' && /\border/i.test(subCommand)) {
+      targetUrl = 'https://www.flipkart.com/account/orders';
+    } else if (siteKey === 'flipkart' && /\bcart/i.test(subCommand)) {
+      targetUrl = 'https://www.flipkart.com/viewcart';
+    } else if (siteKey === 'amazon' && /\border/i.test(subCommand)) {
+      targetUrl = 'https://www.amazon.in/gp/your-account/order-history';
+    } else if (siteKey === 'amazon' && /\bcart/i.test(subCommand)) {
+      targetUrl = 'https://www.amazon.in/gp/cart/view.html';
+    } else if (/search|find/i.test(clean)) {
+      workflowType = 'search_site';
+    } else if (/type|prompt|write/i.test(clean)) {
+      workflowType = 'type_prompt';
+    }
+
+    return {
+      isDirectMatch: true,
+      action: {
+        action: 'web_workflow',
+        target: targetUrl,
+        platform: 'browser_extension',
+        requires_confirmation: false,
+        parameters: {
+          workflow_type: workflowType,
+          click_label: subCommand,
+          query: subCommand,
+          prompt_text: subCommand,
+        },
+      },
+      spoken_response: `Opening ${rawSite} and navigating to ${subCommand}.`,
     };
   }
 
@@ -334,7 +497,6 @@ function parseLocalCommand(rawText) {
         spoken_response: `Opening ${url}.`,
       };
     }
-    // Any other "open X" resolves cleanly via web search
     return {
       isDirectMatch: true,
       action: {
@@ -447,22 +609,25 @@ async function localAnswerQuestionFallback(cleanText) {
     return 'I am El Dorado, your AI voice assistant. Ask me any question or speak any browser command.';
   }
 
-  // Wikipedia summary lookup for factual Q&A even offline from backend
   const topic = clean
     .replace(/^(?:what is|who is|who was|tell me about|explain|define|what are|kya hai|kaun hai)\s+(?:a |an |the )?/i, '')
     .replace(/\s*(?:kya hota hai|kya hai|kaun hai|batao|\?)+$/i, '')
     .trim();
   if (topic.length >= 2) {
     try {
-      const sRes = await fetch(
-        `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(topic)}&limit=1&namespace=0&format=json`
+      const sRes = await fetchWithTimeout(
+        `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(topic)}&limit=1&namespace=0&format=json`,
+        {},
+        1800
       );
       if (sRes.ok) {
         const sData = await sRes.json();
         const title = sData?.[1]?.[0];
         if (title) {
-          const sumRes = await fetch(
-            `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title.replace(/ /g, '_'))}`
+          const sumRes = await fetchWithTimeout(
+            `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title.replace(/ /g, '_'))}`,
+            {},
+            1800
           );
           if (sumRes.ok) {
             const sumJson = await sumRes.json();
@@ -473,10 +638,178 @@ async function localAnswerQuestionFallback(cleanText) {
         }
       }
     } catch {
-      // Fall through cleanly
+      // Fall through cleanly on fast timeout
     }
   }
   return null;
+}
+
+function waitForTabComplete(tabId, timeoutMs = 8000) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      chrome.tabs.onUpdated.removeListener(onUpdated);
+      clearTimeout(timer);
+      resolve();
+    };
+    const onUpdated = (updatedTabId, info) => {
+      if (updatedTabId === tabId && info.status === 'complete') {
+        setTimeout(done, 450);
+      }
+    };
+    chrome.tabs.onUpdated.addListener(onUpdated);
+    const timer = setTimeout(done, timeoutMs);
+    chrome.tabs.get(tabId, (t) => {
+      if (t?.status === 'complete') {
+        setTimeout(done, 350);
+      }
+    });
+  });
+}
+
+async function executeWebWorkflow(cmd) {
+  const url = cmd.target;
+  if (!url || !isSafeHttpUrl(url)) {
+    return { ok: false, error: 'Blocked unsafe or invalid workflow URL.' };
+  }
+  let targetHost = '';
+  try {
+    targetHost = new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return { ok: false, error: 'Invalid workflow URL.' };
+  }
+
+  const allTabs = await chrome.tabs.query({ lastFocusedWindow: true });
+  let tab = allTabs.find((t) => {
+    try {
+      return t.url && new URL(t.url).hostname.replace(/^www\./, '') === targetHost;
+    } catch {
+      return false;
+    }
+  });
+
+  if (tab?.id) {
+    await chrome.tabs.update(tab.id, { active: true });
+    // Navigate deep path for ecommerce sections if on home/different path
+    if (url.length > `https://${targetHost}`.length + 3 && !(tab.url || '').startsWith(url)) {
+      await chrome.tabs.update(tab.id, { url });
+      await waitForTabComplete(tab.id, 7000);
+    }
+  } else {
+    tab = await chrome.tabs.create({ url, active: true });
+    if (tab?.id) {
+      await waitForTabComplete(tab.id, 8000);
+    }
+  }
+
+  if (!tab?.id) {
+    return { ok: false, error: 'Could not open target tab.' };
+  }
+
+  const params = cmd.parameters || {};
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      args: [params],
+      func: (workflowParams) => {
+        const wfType = workflowParams.workflow_type || 'type_prompt';
+        const waitAndRun = (attempt) => {
+          if (wfType === 'type_prompt') {
+            const promptText = String(workflowParams.prompt_text || '').trim();
+            if (!promptText) return;
+            const input =
+              document.querySelector('#prompt-textarea') ||
+              document.querySelector('textarea[placeholder*="Message"], textarea[placeholder*="Ask"], textarea') ||
+              document.querySelector('[contenteditable="true"][role="textbox"], div[contenteditable="true"].ProseMirror');
+            if (input) {
+              input.focus();
+              if (input instanceof HTMLTextAreaElement || input instanceof HTMLInputElement) {
+                const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value')?.set;
+                if (setter) setter.call(input, promptText);
+                else input.value = promptText;
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+              } else {
+                input.textContent = promptText;
+                input.dispatchEvent(new InputEvent('input', { bubbles: true, data: promptText }));
+              }
+              setTimeout(() => {
+                const sendBtn =
+                  document.querySelector('button[data-testid="send-button"]') ||
+                  document.querySelector('button[aria-label*="Send" i]:not([disabled])') ||
+                  document.querySelector('button[type="submit"]:not([disabled])');
+                if (sendBtn instanceof HTMLElement) sendBtn.click();
+              }, 220);
+              return;
+            }
+          } else if (wfType === 'click_target') {
+            const label = String(workflowParams.click_label || '').toLowerCase();
+            if (label) {
+              const els = Array.from(document.querySelectorAll('a, button, [role="link"], [role="button"]'));
+              const match = els.find((el) => (el.textContent || '').toLowerCase().includes(label));
+              if (match instanceof HTMLElement) {
+                match.click();
+                return;
+              }
+            }
+          } else if (wfType === 'search_site') {
+            const query = String(workflowParams.query || '').trim();
+            const searchBox =
+              document.querySelector('input[type="search"]') ||
+              document.querySelector('input[name="q"], input[placeholder*="Search" i]');
+            if (searchBox instanceof HTMLInputElement && query) {
+              searchBox.focus();
+              searchBox.value = query;
+              searchBox.dispatchEvent(new Event('input', { bubbles: true }));
+              searchBox.form?.submit();
+              return;
+            }
+          } else if (wfType === 'whatsapp_send') {
+            const recipient = String(workflowParams.recipient || '').trim();
+            const msgText = String(workflowParams.message_text || 'Hi').trim();
+            const searchBox =
+              document.querySelector('[data-testid="chat-list-search"]') ||
+              document.querySelector('div[contenteditable="true"][data-tab="3"]');
+            if (searchBox instanceof HTMLElement && recipient) {
+              searchBox.focus();
+              document.execCommand('insertText', false, recipient);
+              setTimeout(() => {
+                const chats = Array.from(document.querySelectorAll('#pane-side [role="listitem"], #pane-side span[title]'));
+                const targetChat = chats.find((el) =>
+                  (el.getAttribute('title') || el.textContent || '').toLowerCase().includes(recipient.toLowerCase())
+                );
+                if (targetChat instanceof HTMLElement) {
+                  targetChat.click();
+                  setTimeout(() => {
+                    const msgBox =
+                      document.querySelector('footer div[contenteditable="true"][data-tab="10"]') ||
+                      document.querySelector('footer div[contenteditable="true"]');
+                    if (msgBox instanceof HTMLElement) {
+                      msgBox.focus();
+                      document.execCommand('insertText', false, msgText);
+                      setTimeout(() => {
+                        const sendBtn = document.querySelector('button[aria-label="Send"], span[data-icon="send"]');
+                        if (sendBtn instanceof HTMLElement) sendBtn.click();
+                      }, 250);
+                    }
+                  }, 500);
+                }
+              }, 700);
+              return;
+            }
+          }
+          if (attempt < 14) {
+            setTimeout(() => waitAndRun(attempt + 1), 350);
+          }
+        };
+        waitAndRun(0);
+      },
+    });
+  } catch {
+    // Tab opened even if site blocks late scripting
+  }
+  return { ok: true, tabId: tab.id, message: `Executed workflow on ${url}` };
 }
 
 function connectNativeCompanion() {
@@ -531,6 +864,38 @@ async function executeBrowserAction(cmd) {
         }
         const tab = await chrome.tabs.create({ url });
         return { ok: true, tabId: tab.id, message: `Opened ${url}` };
+      }
+
+      case 'web_workflow':
+        return await executeWebWorkflow(cmd);
+
+      case 'undo':
+      case 'redo': {
+        const [active] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+        if (!active?.id) return { ok: false, error: 'No active tab.' };
+        const isUndo = cmd.action === 'undo';
+        await chrome.scripting
+          .executeScript({
+            target: { tabId: active.id },
+            args: [isUndo],
+            func: (undoMode) => {
+              const activeEl = document.activeElement;
+              const isEditable =
+                activeEl &&
+                (activeEl.tagName === 'TEXTAREA' ||
+                  activeEl.tagName === 'INPUT' ||
+                  activeEl.getAttribute('contenteditable') === 'true');
+              if (isEditable) {
+                document.execCommand(undoMode ? 'undo' : 'redo');
+              } else if (undoMode) {
+                window.history.back();
+              } else {
+                window.history.forward();
+              }
+            },
+          })
+          .catch(() => {});
+        return { ok: true, message: isUndo ? 'Undid last action.' : 'Redid action.' };
       }
 
       case 'duplicate_tab': {
@@ -673,33 +1038,37 @@ async function handleVoiceOrTextCommand(text, serverUrl) {
   let interpreted = null;
   let source = 'extension_local';
 
-  // Run direct Chrome-native matches instantaneously; ask Gemini backend for complex queries
+  // Run direct matches immediately with zero network wait; query AI backend for open questions only (1.8s timeout)
   if (!localParsed.isDirectMatch) {
     const base = (serverUrl || DEFAULT_SERVER_URL || '').trim().replace(/\/+$/, '');
     if (base && /^https?:\/\//i.test(base)) {
       try {
         const [active] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-        const res = await fetch(`${base}/api/dope/command`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: cleanText,
-            context: {
-              platform: 'browser_extension',
-              extension_connected: true,
-              companion_connected: companionConnected,
-              active_app: 'Google Chrome',
-              active_window_title: active?.title || 'Chrome Tab',
-            },
-          }),
-        });
+        const res = await fetchWithTimeout(
+          `${base}/api/dope/command`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: cleanText,
+              context: {
+                platform: 'browser_extension',
+                extension_connected: true,
+                companion_connected: companionConnected,
+                active_app: 'Google Chrome',
+                active_window_title: active?.title || 'Chrome Tab',
+              },
+            }),
+          },
+          1800
+        );
         const contentType = (res.headers.get('content-type') || '').toLowerCase();
         if (res.ok && contentType.includes('application/json')) {
           interpreted = await res.json();
           source = interpreted.ai_source || 'server';
         }
       } catch {
-        // Fall back smoothly
+        // Fall through cleanly on timeout/offline
       }
     }
   }

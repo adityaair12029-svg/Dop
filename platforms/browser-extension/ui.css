@@ -174,35 +174,39 @@ body {
   width: 60px;
   height: 60px;
   border-radius: 999px;
-  border: 1px solid rgba(47, 113, 227, 0.45);
-  background: var(--ag-accent);
+  border: 2px solid var(--ag-accent);
+  background: #0b0c0f;
   color: #ffffff;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 20px rgba(47, 113, 227, 0.28);
-  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, background-color 0.2s ease;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(47, 113, 227, 0.3);
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .mic-orb:hover {
   transform: translateY(-2px) scale(1.03);
 }
 
-.mic-orb svg {
-  width: 22px;
-  height: 22px;
+.mic-orb svg,
+.mic-orb .orb-logo {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  display: block;
 }
 
 .mic-orb.listening {
   background: var(--ag-danger);
-  border-color: rgba(253, 164, 175, 0.65);
+  border-color: rgba(253, 164, 175, 0.75);
   animation: agOrbPulse 1.5s ease-in-out infinite;
 }
 
 .mic-orb.executing {
   background: #10b981;
-  border-color: rgba(110, 231, 183, 0.65);
+  border-color: rgba(110, 231, 183, 0.75);
 }
 
 @keyframes agOrbPulse {

@@ -133,7 +133,17 @@ async function addExtensionFilesToZip(
       iconsFolder.file('icon16.png', b16);
       iconsFolder.file('icon48.png', b48);
       iconsFolder.file('icon128.png', b128);
+      iconsFolder.file('logo-white.png', b128);
       return;
+    }
+  }
+
+  // Always include pure-white cropped emblem for floating orb & HUD
+  const whiteRes = await fetch('/el-dorado-logo.png', { cache: 'no-store' }).catch(() => null);
+  if (whiteRes && whiteRes.ok && (whiteRes.headers.get('content-type') || '').includes('image')) {
+    const whiteBuf = new Uint8Array(await whiteRes.arrayBuffer());
+    if (whiteBuf.length > 0) {
+      iconsFolder.file('logo-white.png', whiteBuf);
     }
   }
 
@@ -153,7 +163,10 @@ async function addExtensionFilesToZip(
   // Pure canvas PNG fallback so icon files ALWAYS exist even completely offline
   for (const size of [16, 48, 128] as const) {
     const fallbackBytes = renderDefaultOrbIconBytes(size);
-    if (fallbackBytes) iconsFolder.file(`icon${size}.png`, fallbackBytes);
+    if (fallbackBytes) {
+      iconsFolder.file(`icon${size}.png`, fallbackBytes);
+      if (size === 128) iconsFolder.file('logo-white.png', fallbackBytes);
+    }
   }
 }
 

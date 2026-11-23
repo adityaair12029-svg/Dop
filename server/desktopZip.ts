@@ -43,6 +43,12 @@ export async function buildDesktopBundleZip(serverOrigin: string): Promise<Buffe
       iconsFolder.file(`icon${size}.png`, buf);
     }
   }
+  if (iconsFolder) {
+    const whitePath = path.join(EXT_DIR, 'icons', 'logo-white.png');
+    if (fs.existsSync(whitePath)) {
+      iconsFolder.file('logo-white.png', fs.readFileSync(whitePath));
+    }
+  }
 
   // Include ONLY .py and .txt desktop companion files (zero .bat/.sh executables
   // and zero `_`-prefixed files like __init__.py so both Chrome Safe Browsing and

@@ -49,6 +49,9 @@ export type ActionName =
   | 'install_app'
   | 'change_security_setting'
   | 'system_power'
+  | 'undo'
+  | 'redo'
+  | 'web_workflow'
   | 'stop_listening'
   | 'clarify'
   | 'answer_question'
@@ -56,11 +59,16 @@ export type ActionName =
   | 'pair_device';
 
 export interface DopeActionParameters {
-  direction?: 'up' | 'down' | 'in' | 'out' | 'reset' | 'next' | 'previous';
+  direction?: 'up' | 'down' | 'in' | 'out' | 'reset' | 'next' | 'previous' | 'top' | 'bottom';
   page?: number;
   fit_mode?: 'screen' | 'width';
   delta?: number;
   query?: string;
+  workflow_type?: 'type_prompt' | 'click_target' | 'search_site' | 'whatsapp_send';
+  prompt_text?: string;
+  click_label?: string;
+  recipient?: string;
+  message_text?: string;
   to?: string;
   subject?: string;
   body?: string;
@@ -149,6 +157,9 @@ export const ALLOWLISTED_ACTIONS: ReadonlySet<ActionName> = new Set<ActionName>(
   'stop_listening',
   'clarify',
   'answer_question',
+  'undo',
+  'redo',
+  'web_workflow',
   'list_devices',
   'pair_device',
 ]);
@@ -165,7 +176,10 @@ export const PLATFORM_CAPABILITIES: Record<DopePlatform, ReadonlySet<ActionName>
   web: new Set<ActionName>([
     'open_url',
     'web_search',
+    'web_workflow',
     'scroll',
+    'undo',
+    'redo',
     'zoom',
     'pdf_navigate_page',
     'pdf_fit',
@@ -181,7 +195,10 @@ export const PLATFORM_CAPABILITIES: Record<DopePlatform, ReadonlySet<ActionName>
   browser_extension: new Set<ActionName>([
     'open_url',
     'web_search',
+    'web_workflow',
     'scroll',
+    'undo',
+    'redo',
     'new_tab',
     'switch_tab',
     'reload_tab',
@@ -208,6 +225,7 @@ export const PLATFORM_CAPABILITIES: Record<DopePlatform, ReadonlySet<ActionName>
   windows: new Set<ActionName>([
     'open_url',
     'web_search',
+    'web_workflow',
     'open_app',
     'switch_window',
     'minimize_window',
@@ -215,6 +233,8 @@ export const PLATFORM_CAPABILITIES: Record<DopePlatform, ReadonlySet<ActionName>
     'restore_window',
     'close_window',
     'scroll',
+    'undo',
+    'redo',
     'switch_tab',
     'reload_tab',
     'zoom',
@@ -238,6 +258,7 @@ export const PLATFORM_CAPABILITIES: Record<DopePlatform, ReadonlySet<ActionName>
   macos: new Set<ActionName>([
     'open_url',
     'web_search',
+    'web_workflow',
     'open_app',
     'switch_window',
     'minimize_window',
@@ -245,6 +266,8 @@ export const PLATFORM_CAPABILITIES: Record<DopePlatform, ReadonlySet<ActionName>
     'restore_window',
     'close_window',
     'scroll',
+    'undo',
+    'redo',
     'switch_tab',
     'reload_tab',
     'zoom',
@@ -267,6 +290,7 @@ export const PLATFORM_CAPABILITIES: Record<DopePlatform, ReadonlySet<ActionName>
   linux: new Set<ActionName>([
     'open_url',
     'web_search',
+    'web_workflow',
     'open_app',
     'switch_window',
     'minimize_window',
@@ -274,6 +298,8 @@ export const PLATFORM_CAPABILITIES: Record<DopePlatform, ReadonlySet<ActionName>
     'restore_window',
     'close_window',
     'scroll',
+    'undo',
+    'redo',
     'switch_tab',
     'reload_tab',
     'zoom',
@@ -353,6 +379,28 @@ export const ACTION_CATALOG: CommandCatalogItem[] = [
     requires_confirmation: false,
     implementation_status: 'implemented_web',
     failure_behavior: 'Shows search link in transcript if popups are blocked.',
+  },
+  {
+    id: 'cmd-web-workflow',
+    category: 'Browser',
+    action: 'web_workflow',
+    voice_phrase: 'Hey El Dorado, open ChatGPT and type a prompt hi.',
+    supported_platforms: ['web', 'browser_extension', 'windows', 'macos', 'linux'],
+    required_permissions: ['Browser Tab + In-Page Scripting / Desktop Companion'],
+    requires_confirmation: false,
+    implementation_status: 'implemented_companion',
+    failure_behavior: 'Opens the target website directly and reports if sign-in or popup approval is required.',
+  },
+  {
+    id: 'cmd-undo',
+    category: 'Browser',
+    action: 'undo',
+    voice_phrase: 'Hey El Dorado, undo this.',
+    supported_platforms: ['web', 'browser_extension', 'windows', 'macos', 'linux'],
+    required_permissions: ['Active Tab / System Input Automation'],
+    requires_confirmation: false,
+    implementation_status: 'implemented_web',
+    failure_behavior: 'Triggers undo in the active browser editor or across the OS via Desktop Companion.',
   },
   {
     id: 'cmd-switch-tab',
@@ -615,7 +663,7 @@ export function validateDopeAction(
     parameters: candidate.parameters ? { ...candidate.parameters } : undefined,
   };
 
-  if (actionName === 'open_url' && sanitizedAction.target) {
+  if ((actionName === 'open_url' || actionName === 'web_workflow') && sanitizedAction.target) {
     if (!isSafeHttpUrl(sanitizedAction.target)) {
       return {
         valid: false,

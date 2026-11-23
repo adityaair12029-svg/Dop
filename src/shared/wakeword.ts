@@ -70,6 +70,7 @@ export function normalizeMultilingualCommand(input: string): string {
 
 const KNOWN_WEBSITES: Record<string, string> = {
   youtube: 'https://www.youtube.com',
+  yt: 'https://www.youtube.com',
   google: 'https://www.google.com',
   gmail: 'https://mail.google.com',
   github: 'https://github.com',
@@ -78,8 +79,15 @@ const KNOWN_WEBSITES: Record<string, string> = {
   instagram: 'https://www.instagram.com',
   insta: 'https://www.instagram.com',
   chatgpt: 'https://chatgpt.com',
+  gpt: 'https://chatgpt.com',
+  openai: 'https://chatgpt.com',
   gemini: 'https://gemini.google.com',
+  claude: 'https://claude.ai',
+  perplexity: 'https://www.perplexity.ai',
   whatsapp: 'https://web.whatsapp.com',
+  firebase: 'https://console.firebase.google.com',
+  vercel: 'https://vercel.com/dashboard',
+  notion: 'https://www.notion.so',
   facebook: 'https://www.facebook.com',
   twitter: 'https://x.com',
   x: 'https://x.com',
@@ -99,6 +107,19 @@ const KNOWN_WEBSITES: Record<string, string> = {
   hotstar: 'https://www.hotstar.com',
   jiocinema: 'https://www.jiocinema.com',
 };
+
+function resolveWebsiteUrl(rawSite: string): string | null {
+  const cleaned = rawSite
+    .trim()
+    .toLowerCase()
+    .replace(/^(?:the|my|website|site|app)\s+/i, '')
+    .replace(/[.!?]+$/, '');
+  const key = cleaned.replace(/\s+/g, '');
+  if (KNOWN_WEBSITES[key]) return KNOWN_WEBSITES[key];
+  if (/^https?:\/\//i.test(cleaned)) return cleaned;
+  if (/^[a-z0-9-]+(?:\.[a-z]{2,})+(?:\/\S*)?$/i.test(cleaned)) return `https://${cleaned}`;
+  return null;
+}
 
 export function parseOfflineCommand(
   rawText: string,
@@ -157,8 +178,8 @@ export function parseOfflineCommand(
     };
   }
 
-  // Ambiguous short command
-  if (/^(?:open it|do that|open|scroll|zoom|close|delete)$/i.test(lower)) {
+  // Ambiguous short command (note: "scroll" is NOT ambiguous — it scrolls down immediately!)
+  if (/^(?:open it|do that|open|zoom|close|delete)$/i.test(lower)) {
     return {
       matched: true,
       ambiguous: true,
@@ -166,6 +187,32 @@ export function parseOfflineCommand(
       action: { action: 'clarify', platform: context.platform, requires_confirmation: false },
       clarification_question: `Your command "${effectiveText}" is ambiguous. Please specify which app, URL, or direction you want.`,
       spoken_response: `Could you clarify what you want me to ${lower}?`,
+    };
+  }
+
+  // Undo & Redo (browser editor / page history / OS-wide Ctrl+Z)
+  if (/^(?:undo(?:\s+(?:this|that|it|last))?|step\s+back|undo\s+karo|wapas\s+karo|piche\s+karo)[.!?]*$/i.test(lower)) {
+    const check = validateDopeAction(
+      { action: 'undo', platform: context.platform, requires_confirmation: false },
+      context
+    );
+    return {
+      matched: true,
+      action: check.action,
+      supported: check.supported,
+      spoken_response: 'Undoing the last action.',
+    };
+  }
+  if (/^(?:redo(?:\s+(?:this|that|it))?|redo\s+karo)[.!?]*$/i.test(lower)) {
+    const check = validateDopeAction(
+      { action: 'redo', platform: context.platform, requires_confirmation: false },
+      context
+    );
+    return {
+      matched: true,
+      action: check.action,
+      supported: check.supported,
+      spoken_response: 'Redoing the action.',
     };
   }
 
@@ -269,20 +316,32 @@ export function parseOfflineCommand(
     };
   }
 
-  // Scroll
-  if (/scroll\s+down/i.test(lower)) {
+  // Scroll (instant match for "scroll", "scroll page", "scroll down", "scroll up", "scroll to top/bottom")
+  if (/\b(?:scroll\s+(?:to\s+)?bottom|sabse\s+neeche)\b/i.test(lower)) {
     const check = validateDopeAction(
-      { action: 'scroll', platform: context.platform, requires_confirmation: false, parameters: { direction: 'down' } },
+      { action: 'scroll', platform: context.platform, requires_confirmation: false, parameters: { direction: 'bottom' } },
       context
     );
     return {
       matched: true,
       action: check.action,
       supported: check.supported,
-      spoken_response: 'Scrolling down.',
+      spoken_response: 'Scrolling to bottom.',
     };
   }
-  if (/scroll\s+up/i.test(lower)) {
+  if (/\b(?:scroll\s+(?:to\s+)?top|sabse\s+upar)\b/i.test(lower)) {
+    const check = validateDopeAction(
+      { action: 'scroll', platform: context.platform, requires_confirmation: false, parameters: { direction: 'top' } },
+      context
+    );
+    return {
+      matched: true,
+      action: check.action,
+      supported: check.supported,
+      spoken_response: 'Scrolling to top.',
+    };
+  }
+  if (/\b(?:scroll\s+up|scroll\s+above|upar\s+scroll)\b/i.test(lower)) {
     const check = validateDopeAction(
       { action: 'scroll', platform: context.platform, requires_confirmation: false, parameters: { direction: 'up' } },
       context
@@ -292,6 +351,18 @@ export function parseOfflineCommand(
       action: check.action,
       supported: check.supported,
       spoken_response: 'Scrolling up.',
+    };
+  }
+  if (/^(?:scroll(?:\s+(?:down|page|this|please|karo))?|please\s+scroll|scroll\s+the\s+page)$/i.test(lower) || /\bscroll\s+down\b/i.test(lower)) {
+    const check = validateDopeAction(
+      { action: 'scroll', platform: context.platform, requires_confirmation: false, parameters: { direction: 'down' } },
+      context
+    );
+    return {
+      matched: true,
+      action: check.action,
+      supported: check.supported,
+      spoken_response: 'Scrolling down.',
     };
   }
 
@@ -597,6 +668,112 @@ export function parseOfflineCommand(
       action: check.action,
       supported: check.supported,
       spoken_response: `Searching Google for ${query}.`,
+    };
+  }
+
+  // Compound multi-step website workflows (WhatsApp message, ChatGPT prompt, Flipkart/Amazon sections, generic open+action)
+  const waMatch =
+    effectiveText.match(/(?:open\s+)?whatsapp(?:\s+(?:web|app))?(?:\s+and)?\s+(?:send|message|msg|type)\s+(?:a\s+message\s+)?["']?(.+?)["']?\s+to\s+([a-z0-9 ._'-]+)[.!?]*$/i) ||
+    effectiveText.match(/(?:open\s+)?whatsapp(?:\s+(?:web|app))?(?:\s+and)?\s+(?:message|msg|text)\s+([a-z0-9 ._'-]+?)\s+(?:saying|with|hi|hello)?\s*["']?(.+?)["']?[.!?]*$/i) ||
+    effectiveText.match(/send\s+["']?(.+?)["']?\s+to\s+([a-z0-9 ._'-]+?)\s+(?:on|in)\s+whatsapp[.!?]*$/i);
+  if (waMatch) {
+    const isMsgSecond = /message|msg|text/i.test(effectiveText) && !/\bto\b/i.test(effectiveText);
+    const msgText = (isMsgSecond ? waMatch[2] : waMatch[1] || 'Hi').trim();
+    const recipient = (isMsgSecond ? waMatch[1] : waMatch[2] || '').trim();
+    const check = validateDopeAction(
+      {
+        action: 'web_workflow',
+        target: 'https://web.whatsapp.com',
+        platform: context.platform,
+        requires_confirmation: false,
+        parameters: {
+          workflow_type: 'whatsapp_send',
+          recipient,
+          message_text: msgText,
+        },
+      },
+      context
+    );
+    return {
+      matched: true,
+      action: check.action,
+      supported: check.supported,
+      spoken_response: `Opening WhatsApp and sending "${msgText}" to ${recipient}.`,
+    };
+  }
+
+  const aiPromptMatch = effectiveText.match(
+    /^(?:open\s+)?(chat\s*gpt|gpt|openai|gemini|claude|perplexity)\s*(?:and\s+)?(?:type|write|ask|enter|submit|send)?(?:\s+a)?(?:\s+prompt)?[\s:,-]+["']?(.+?)["']?[.!?]*$/i
+  );
+  if (aiPromptMatch && aiPromptMatch[2]?.trim()) {
+    const siteKey = aiPromptMatch[1].toLowerCase().replace(/\s+/g, '');
+    const promptText = aiPromptMatch[2].trim();
+    const targetUrl = resolveWebsiteUrl(siteKey) || 'https://chatgpt.com';
+    const check = validateDopeAction(
+      {
+        action: 'web_workflow',
+        target: targetUrl,
+        platform: context.platform,
+        requires_confirmation: false,
+        parameters: {
+          workflow_type: 'type_prompt',
+          prompt_text: promptText,
+        },
+      },
+      context
+    );
+    return {
+      matched: true,
+      action: check.action,
+      supported: check.supported,
+      spoken_response: `Opening ${aiPromptMatch[1].trim()} and typing "${promptText}".`,
+    };
+  }
+
+  const compoundMatch = effectiveText.match(
+    /^open\s+([a-z0-9 .-]+?)\s+(?:and\s+(?:go\s+to|open|click|search(?:\s+for)?|find|type)|go\s+to|search(?:\s+for)?)\s+(.+?)[.!?]*$/i
+  );
+  if (compoundMatch) {
+    const rawSite = compoundMatch[1].trim();
+    const subCommand = compoundMatch[2].trim();
+    const siteKey = rawSite.toLowerCase().replace(/\s+/g, '');
+    let targetUrl = resolveWebsiteUrl(rawSite) || `https://${siteKey}.com`;
+    let workflowType: 'click_target' | 'search_site' | 'type_prompt' = 'click_target';
+
+    if (siteKey === 'flipkart' && /\border/i.test(subCommand)) {
+      targetUrl = 'https://www.flipkart.com/account/orders';
+    } else if (siteKey === 'flipkart' && /\bcart/i.test(subCommand)) {
+      targetUrl = 'https://www.flipkart.com/viewcart';
+    } else if (siteKey === 'amazon' && /\border/i.test(subCommand)) {
+      targetUrl = 'https://www.amazon.in/gp/your-account/order-history';
+    } else if (siteKey === 'amazon' && /\bcart/i.test(subCommand)) {
+      targetUrl = 'https://www.amazon.in/gp/cart/view.html';
+    } else if (/search|find/i.test(effectiveText)) {
+      workflowType = 'search_site';
+    } else if (/type|prompt|write/i.test(effectiveText)) {
+      workflowType = 'type_prompt';
+    }
+
+    const check = validateDopeAction(
+      {
+        action: 'web_workflow',
+        target: targetUrl,
+        platform: context.platform,
+        requires_confirmation: false,
+        parameters: {
+          workflow_type: workflowType,
+          click_label: subCommand,
+          query: subCommand,
+          prompt_text: subCommand,
+        },
+      },
+      context
+    );
+    return {
+      matched: true,
+      action: check.action,
+      supported: check.supported,
+      spoken_response: `Opening ${rawSite} and navigating to ${subCommand}.`,
     };
   }
 

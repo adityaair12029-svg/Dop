@@ -1,0 +1,159 @@
+{
+  "history": [
+    {
+      "id": "cmd-a006eb1c",
+      "timestamp": "2026-11-23T13:52:59.843Z",
+      "raw_input": "Hey El Dorado, open ChatGPT and type a prompt hi",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "web_workflow",
+        "target": "https://chatgpt.com",
+        "platform": "web",
+        "requires_confirmation": false,
+        "parameters": {
+          "workflow_type": "type_prompt",
+          "prompt_text": "hi"
+        }
+      },
+      "spoken_response": "Opening ChatGPT and typing \"hi\".",
+      "status": "executed",
+      "ai_source": "offline_fallback"
+    },
+    {
+      "id": "cmd-50f84b11",
+      "timestamp": "2026-11-23T13:52:54.021Z",
+      "raw_input": "Hey El Dorado, scroll",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "scroll",
+        "platform": "web",
+        "requires_confirmation": false,
+        "parameters": {
+          "direction": "down"
+        }
+      },
+      "spoken_response": "Scrolling down.",
+      "status": "executed",
+      "ai_source": "offline_fallback"
+    },
+    {
+      "id": "cmd-203e2bef",
+      "timestamp": "2026-11-23T13:05:40.886Z",
+      "raw_input": "Hey El Dorado, go to page 15.",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "pdf_navigate_page",
+        "platform": "web",
+        "requires_confirmation": false,
+        "parameters": {
+          "page": 15
+        }
+      },
+      "spoken_response": "Navigating to page 15.",
+      "status": "executed",
+      "ai_source": "offline_fallback"
+    },
+    {
+      "id": "cmd-67fb1222",
+      "timestamp": "2026-11-23T13:05:40.621Z",
+      "raw_input": "Hey El Dorado, go to page 15.",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "pdf_navigate_page",
+        "platform": "web",
+        "requires_confirmation": false,
+        "parameters": {
+          "page": 15
+        }
+      },
+      "spoken_response": "Navigating to page 15.",
+      "status": "executed",
+      "ai_source": "offline_fallback"
+    },
+    {
+      "id": "cmd-70263f99",
+      "timestamp": "2026-11-23T13:05:40.343Z",
+      "raw_input": "Hey El Dorado, go to page 15.",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "pdf_navigate_page",
+        "platform": "web",
+        "requires_confirmation": false,
+        "parameters": {
+          "page": 15
+        }
+      },
+      "spoken_response": "Navigating to page 15.",
+      "status": "executed",
+      "ai_source": "offline_fallback"
+    },
+    {
+      "id": "cmd-3415a31e",
+      "timestamp": "2026-11-23T13:05:40.072Z",
+      "raw_input": "Hey El Dorado, go to page 15.",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "pdf_navigate_page",
+        "platform": "web",
+        "requires_confirmation": false,
+        "parameters": {
+          "page": 15
+        }
+      },
+      "spoken_response": "Navigating to page 15.",
+      "status": "executed",
+      "ai_source": "offline_fallback"
+    }
+  ],
+  "aliases": [
+    {
+      "id": "alias-study",
+      "phrase": "study mode",
+      "action": "open_url",
+      "target": "https://www.wikipedia.org",
+      "created_at": "2026-11-23T13:04:56.859Z"
+    },
+    {
+      "id": "alias-watch",
+      "phrase": "video time",
+      "action": "open_url",
+      "target": "https://www.youtube.com",
+      "created_at": "2026-11-23T13:04:56.860Z"
+    }
+  ],
+  "devices": [
+    {
+      "id": "dev-web-console",
+      "name": "This Browser Session",
+      "platform": "web",
+      "os_version": "Web Speech & PDF Testbench",
+      "status": "connected",
+      "remote_control_approved": true,
+      "paired_at": "2026-11-23T13:04:56.860Z",
+      "last_seen": "2026-11-23T13:04:56.860Z",
+      "capabilities": [
+        "open_url",
+        "web_search",
+        "pdf_testbench",
+        "gmail_oauth"
+      ]
+    }
+  ],
+  "pending_pairings": [],
+  "settings": {
+    "theme": "light",
+    "language": "auto",
+    "wake_word_enabled": false,
+    "wake_word_engine": "openwakeword",
+    "wake_word_sensitivity": 0.65,
+    "voice_feedback_enabled": true,
+    "store_history": true,
+    "remote_execution_requires_approval": true
+  }
+}

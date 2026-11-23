@@ -180,10 +180,11 @@ test('Chrome Extension ZIP bundle (El Dorado v1.5.0), Alt+D shortcut & browser c
   assert.ok(parsedZip.file('sidepanel.html'), 'sidepanel.html must be at ZIP root');
   assert.ok(parsedZip.file('hotkey_content.js'), 'hotkey_content.js must be bundled');
   assert.ok(parsedZip.file('icons/icon128.png'), 'icons/icon128.png must exist');
+  assert.ok(parsedZip.file('icons/logo-white.png'), 'icons/logo-white.png must exist for floating orb');
   const manifestJson = JSON.parse(await parsedZip.file('manifest.json')!.async('string'));
   assert.equal(manifestJson.manifest_version, 3);
   assert.equal(manifestJson.name, 'El Dorado Assistant');
-  assert.equal(manifestJson.version, '1.5.0');
+  assert.equal(manifestJson.version, '1.5.1');
   assert.equal(manifestJson.commands['activate-dope'].suggested_key.default, 'Alt+D');
   const bgJs = await parsedZip.file('background.js')!.async('string');
   assert.ok(bgJs.includes('https://dopextention.vercel.app'));
@@ -210,6 +211,55 @@ test('Chrome Extension ZIP bundle (El Dorado v1.5.0), Alt+D shortcut & browser c
     icon128: 'invalid',
   });
   assert.equal(rejected, false);
+});
+
+test('Instant bare scroll, undo/redo, and compound multi-step web_workflow actions', () => {
+  const bareScroll = parseOfflineCommand('Hey El Dorado, scroll', webContext);
+  assert.equal(bareScroll.matched, true);
+  assert.equal(bareScroll.ambiguous, undefined);
+  assert.equal(bareScroll.action?.action, 'scroll');
+  assert.equal(bareScroll.action?.parameters?.direction, 'down');
+
+  const undoCmd = parseOfflineCommand('Hey El Dorado, undo this', webContext);
+  assert.equal(undoCmd.matched, true);
+  assert.equal(undoCmd.action?.action, 'undo');
+  assert.equal(undoCmd.supported, true);
+
+  const redoCmd = parseOfflineCommand('Hey El Dorado, redo', webContext);
+  assert.equal(redoCmd.matched, true);
+  assert.equal(redoCmd.action?.action, 'redo');
+
+  const gptPrompt = parseOfflineCommand('Hey El Dorado, open ChatGPT and type a prompt hi', {
+    ...webContext,
+    platform: 'browser_extension',
+    extension_connected: true,
+  });
+  assert.equal(gptPrompt.matched, true);
+  assert.equal(gptPrompt.action?.action, 'web_workflow');
+  assert.equal(gptPrompt.action?.target, 'https://chatgpt.com');
+  assert.equal(gptPrompt.action?.parameters?.workflow_type, 'type_prompt');
+  assert.equal(gptPrompt.action?.parameters?.prompt_text, 'hi');
+
+  const flipkartOrders = parseOfflineCommand('Hey El Dorado, open Flipkart and go to order section', {
+    ...webContext,
+    platform: 'browser_extension',
+    extension_connected: true,
+  });
+  assert.equal(flipkartOrders.matched, true);
+  assert.equal(flipkartOrders.action?.action, 'web_workflow');
+  assert.equal(flipkartOrders.action?.target, 'https://www.flipkart.com/account/orders');
+
+  const waSend = parseOfflineCommand('Hey El Dorado, open WhatsApp and send hi to Abhinav', {
+    ...webContext,
+    platform: 'browser_extension',
+    extension_connected: true,
+  });
+  assert.equal(waSend.matched, true);
+  assert.equal(waSend.action?.action, 'web_workflow');
+  assert.equal(waSend.action?.target, 'https://web.whatsapp.com');
+  assert.equal(waSend.action?.parameters?.workflow_type, 'whatsapp_send');
+  assert.equal(waSend.action?.parameters?.recipient, 'Abhinav');
+  assert.equal(waSend.action?.parameters?.message_text, 'hi');
 });
 
 test('AI Q&A pure English fallback (math, time, date, El Dorado identity) & Desktop ZIP bundle', async () => {
@@ -242,6 +292,7 @@ test('AI Q&A pure English fallback (math, time, date, El Dorado identity) & Desk
   const parsedDesktop = await JSZip.loadAsync(desktopBuf);
   assert.ok(parsedDesktop.file('manifest.json'), 'manifest.json must be in Desktop ZIP so Chrome Load unpacked also succeeds');
   assert.ok(parsedDesktop.file('icons/icon128.png'), 'icons/icon128.png must be in Desktop ZIP');
+  assert.ok(parsedDesktop.file('icons/logo-white.png'), 'icons/logo-white.png must be in Desktop ZIP');
   assert.ok(parsedDesktop.file('el_dorado_companion.py'), 'el_dorado_companion.py must be in desktop ZIP');
   assert.ok(parsedDesktop.file('INSTALL_DESKTOP.txt'), 'INSTALL_DESKTOP.txt must be in desktop ZIP');
   assert.equal(parsedDesktop.file('Run-DOPE-Desktop.bat'), null, 'No .bat scripts inside ZIP so Chrome Safe Browsing does not block download');

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { LogOut, Mail, Moon, Sun } from 'lucide-react';
 import type { WorkspaceAccount } from '../lib/firebaseAuth';
-import { AntigravityMark } from './AntigravityMark';
 
 export type DopeTab = 'console' | 'commands' | 'devices' | 'platforms' | 'settings';
 
@@ -10,6 +9,7 @@ interface TopBarProps {
   onSelectTab: (tab: DopeTab) => void;
   account: WorkspaceAccount | null;
   hasGmailToken: boolean;
+  apiOnline: boolean;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   onOpenSignIn: () => void;
@@ -30,6 +30,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onSelectTab,
   account,
   hasGmailToken,
+  apiOnline,
   theme,
   onToggleTheme,
   onOpenSignIn,
@@ -57,19 +58,44 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   return (
     <header className="sticky top-0 z-40 border-b border-black/10 dark:border-white/[0.08] bg-white/85 dark:bg-[#070708]/85 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 md:py-0 md:h-16 flex flex-wrap md:flex-nowrap items-center justify-between gap-x-8 gap-y-2">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 md:py-0 md:h-16 flex flex-wrap md:flex-nowrap items-center justify-between gap-x-6 gap-y-2">
         {/* Zone 1: Single-line brand mark + El Dorado wordmark */}
         <button
           type="button"
           onClick={() => onSelectTab('console')}
           className="inline-flex items-center gap-2.5 text-[17px] font-semibold tracking-tight text-[#0A0A0C] dark:text-white whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-[#2F71E3] rounded-lg cursor-pointer"
         >
-          <AntigravityMark variant="color" className="w-6 h-6 shrink-0" />
+          <span className="w-7 h-7 rounded-lg bg-[#0B0C0F] border border-black/10 dark:border-white/15 flex items-center justify-center shrink-0">
+            <img
+              src="/el-dorado-logo.png"
+              alt="El Dorado logo"
+              className="w-5 h-5 object-contain"
+            />
+          </span>
           <span>El Dorado</span>
         </button>
 
-        {/* Zone 3: Single primary action / signed-in account popover */}
-        <div className="shrink-0 order-2 md:order-3 relative" ref={menuRef}>
+        {/* Zone 3: Global Health Status Indicator + Single primary action / signed-in account popover */}
+        <div className="shrink-0 order-2 md:order-3 flex items-center gap-2.5 relative" ref={menuRef}>
+          <div
+            role="status"
+            aria-live="polite"
+            data-testid="global-health-indicator"
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium whitespace-nowrap shrink-0 ${
+              apiOnline
+                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                : 'border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300'
+            }`}
+          >
+            <span
+              aria-hidden="true"
+              className={`w-2 h-2 rounded-full shrink-0 ${
+                apiOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
+              }`}
+            />
+            <span>{apiOnline ? 'El Dorado System Online' : 'Disconnected'}</span>
+          </div>
+
           {account ? (
             <>
               <button
@@ -95,7 +121,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               </button>
 
               {menuOpen && (
-                <div className="ag-animate-in absolute right-0 mt-2 w-64 rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#0D0D10] p-3 shadow-2xl z-50">
+                <div className="ag-animate-in absolute right-0 top-full mt-2 w-64 rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#0D0D10] p-3 shadow-2xl z-50">
                   <div className="px-2 py-1.5 border-b border-black/10 dark:border-white/10">
                     <div className="text-sm font-semibold text-[#0A0A0C] dark:text-white truncate">
                       {account.displayName}

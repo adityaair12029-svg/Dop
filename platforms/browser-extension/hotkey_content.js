@@ -23,10 +23,10 @@
         osc1.frequency.setValueAtTime(freq, now + delay);
         osc2.frequency.setValueAtTime(freq * 2, now + delay);
         g1.gain.setValueAtTime(0.001, now + delay);
-        g1.gain.exponentialRampToValueAtTime(gainPeak, now + delay + 0.018);
+        g1.gain.exponentialRampToValueAtTime(gainPeak, now + delay + 0.016);
         g1.gain.exponentialRampToValueAtTime(0.0008, now + delay + dur);
         g2.gain.setValueAtTime(0.0005, now + delay);
-        g2.gain.exponentialRampToValueAtTime(gainPeak * 0.28, now + delay + 0.015);
+        g2.gain.exponentialRampToValueAtTime(gainPeak * 0.28, now + delay + 0.014);
         g2.gain.exponentialRampToValueAtTime(0.0004, now + delay + dur * 0.75);
         osc1.connect(g1);
         osc2.connect(g2);
@@ -37,7 +37,7 @@
         osc1.stop(now + delay + dur + 0.03);
         osc2.stop(now + delay + dur + 0.03);
       });
-      setTimeout(() => ctx.close().catch(() => {}), 1100);
+      setTimeout(() => ctx.close().catch(() => {}), 1050);
     } catch {
       // Ignore audio errors
     }
@@ -45,32 +45,32 @@
 
   function playActivateSound() {
     playTone([
-      [523.25, 0, 0.18, 0.13],
-      [659.25, 0.06, 0.2, 0.12],
-      [783.99, 0.12, 0.22, 0.12],
-      [1174.66, 0.18, 0.3, 0.1],
+      [523.25, 0, 0.16, 0.13],
+      [659.25, 0.05, 0.18, 0.12],
+      [783.99, 0.1, 0.2, 0.12],
+      [1174.66, 0.15, 0.28, 0.1],
     ]);
   }
 
   function playExecuteSound() {
     playTone([
-      [659.25, 0, 0.1, 0.09],
-      [880.0, 0.06, 0.14, 0.09],
+      [659.25, 0, 0.09, 0.09],
+      [880.0, 0.05, 0.12, 0.09],
     ]);
   }
 
   function playSuccessSound() {
     playTone([
-      [783.99, 0, 0.14, 0.1],
-      [987.77, 0.07, 0.16, 0.1],
-      [1174.66, 0.14, 0.24, 0.11],
+      [783.99, 0, 0.12, 0.1],
+      [987.77, 0.06, 0.14, 0.1],
+      [1174.66, 0.12, 0.22, 0.11],
     ]);
   }
 
   function playErrorSound() {
     playTone([
-      [293.66, 0, 0.15, 0.1],
-      [261.63, 0.11, 0.22, 0.09],
+      [293.66, 0, 0.14, 0.1],
+      [261.63, 0.1, 0.2, 0.09],
     ]);
   }
 
@@ -80,7 +80,7 @@
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
       u.lang = 'en-US';
-      u.rate = 1.04;
+      u.rate = 1.06;
       window.speechSynthesis.speak(u);
     } catch {
       // Ignore
@@ -116,11 +116,11 @@
     const style = document.createElement('style');
     style.textContent = `
       @keyframes agHudLiftoff {
-        from { opacity: 0; transform: translateY(12px) scale(0.97); }
+        from { opacity: 0; transform: translateY(10px) scale(0.97); }
         to { opacity: 1; transform: translateY(0) scale(1); }
       }
       @keyframes agOrbPulse {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(47, 113, 227, 0.5); }
+        0%, 100% { box-shadow: 0 0 0 0 rgba(47, 113, 227, 0.55); }
         50% { box-shadow: 0 0 0 9px rgba(47, 113, 227, 0); }
       }
       .dope-hud {
@@ -128,16 +128,16 @@
         right: 22px;
         bottom: 22px;
         z-index: 2147483647;
-        width: 344px;
+        width: 356px;
         overflow: hidden;
         background: #070708;
         color: #ffffff;
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.14);
         border-radius: 18px;
         padding: 15px 16px;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
         font-family: 'Plus Jakarta Sans', 'DM Sans', system-ui, -apple-system, sans-serif;
-        animation: agHudLiftoff 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        animation: agHudLiftoff 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
       }
       .ag-bg-canvas {
         position: absolute;
@@ -149,16 +149,24 @@
       }
       .hud-body { position: relative; z-index: 1; }
       .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-      .brand { display: flex; align-items: center; gap: 10px; }
+      .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
       .orb {
-        width: 32px; height: 32px; border-radius: 999px;
-        background: #2f71e3;
+        width: 36px; height: 36px; border-radius: 999px;
+        background: #0b0c0f;
+        border: 1.5px solid #2f71e3;
         animation: agOrbPulse 1.5s ease-in-out infinite;
         flex-shrink: 0;
         display: flex; align-items: center; justify-content: center;
+        overflow: hidden;
+      }
+      .orb img {
+        width: 22px;
+        height: 22px;
+        object-fit: contain;
+        display: block;
       }
       .title { font-size: 13.5px; font-weight: 600; letter-spacing: -0.02em; color: #ffffff; }
-      .sub { font-size: 12px; color: #9ca3af; margin-top: 2px; line-height: 1.4; }
+      .sub { font-size: 12px; color: #9ca3af; margin-top: 2px; line-height: 1.4; word-break: break-word; }
       .close {
         background: transparent; color: #9ca3af; border: 0;
         font-size: 16px; cursor: pointer; padding: 2px 6px; border-radius: 8px;
@@ -166,7 +174,7 @@
       .close:hover { color: #ffffff; background: rgba(255,255,255,0.08); }
       .row {
         display: flex; gap: 6px; margin-top: 12px;
-        background: #0d0d10; border: 1px solid rgba(255,255,255,0.1);
+        background: #0d0d10; border: 1px solid rgba(255,255,255,0.12);
         border-radius: 14px; padding: 4px 4px 4px 12px;
       }
       .row:focus-within { border-color: #2f71e3; }
@@ -187,8 +195,8 @@
 
     const bgCanvas = document.createElement('canvas');
     bgCanvas.className = 'ag-bg-canvas';
-    bgCanvas.width = 344;
-    bgCanvas.height = 140;
+    bgCanvas.width = 356;
+    bgCanvas.height = 148;
 
     const hudBody = document.createElement('div');
     hudBody.className = 'hud-body';
@@ -199,13 +207,29 @@
     brand.className = 'brand';
     const orb = document.createElement('div');
     orb.className = 'orb';
+    const logoImg = document.createElement('img');
+    logoImg.alt = 'El Dorado logo';
+    try {
+      logoImg.src = chrome.runtime.getURL('icons/logo-white.png');
+    } catch {
+      // Fallback handled by onerror
+    }
+    logoImg.onerror = () => {
+      try {
+        logoImg.src = chrome.runtime.getURL('icons/icon128.png');
+      } catch {
+        logoImg.style.display = 'none';
+      }
+    };
+    orb.appendChild(logoImg);
+
     const txtWrap = document.createElement('div');
     const title = document.createElement('div');
     title.className = 'title';
     title.textContent = 'El Dorado Listening (Alt + D + T)';
     const sub = document.createElement('div');
     sub.className = 'sub';
-    sub.textContent = 'Good to see you. Speak a command or ask AI...';
+    sub.textContent = 'Speak a command ("scroll", "undo", "open ChatGPT and type hi")...';
     txtWrap.append(title, sub);
     brand.append(orb, txtWrap);
 
@@ -221,7 +245,7 @@
     const inp = document.createElement('input');
     inp.className = 'inp';
     inp.type = 'text';
-    inp.placeholder = 'Ask anything or say: open YouTube...';
+    inp.placeholder = 'Type or speak any command...';
     const goBtn = document.createElement('button');
     goBtn.className = 'go';
     goBtn.type = 'submit';
@@ -232,8 +256,8 @@
     card.append(bgCanvas, hudBody);
     shadow.append(style, card);
     document.documentElement.appendChild(hostEl);
+    inp.focus();
 
-    // Render radial particle streams inside HUD background with key/click flow
     const ctx = bgCanvas.getContext('2d');
     if (ctx) {
       const colors = ['#2F71E3', '#60A5FA', '#818CF8', '#A78BFA', '#F87171', '#FBBF24'];
@@ -254,13 +278,13 @@
 
       const animateHudParticles = () => {
         if (!hostEl) return;
-        ctx.clearRect(0, 0, 344, 140);
+        ctx.clearRect(0, 0, 356, 148);
         for (const p of particles) {
           p.r += p.speed * (1 + hudSurge);
           p.angle += 0.0018 * (1 + hudSurge);
           if (p.r > 1.05) p.r = 0.12;
-          const x = 172 + Math.cos(p.angle) * (p.r * 190);
-          const y = 65 + Math.sin(p.angle) * (p.r * 95);
+          const x = 178 + Math.cos(p.angle) * (p.r * 195);
+          const y = 70 + Math.sin(p.angle) * (p.r * 95);
           const len = 4 + hudSurge * 1.8;
           ctx.save();
           ctx.translate(x, y);
@@ -283,7 +307,7 @@
           ctx.globalAlpha = rp.alpha;
           ctx.lineWidth = 1.4;
           ctx.beginPath();
-          ctx.arc(172, 65, rp.r, 0, Math.PI * 2);
+          ctx.arc(178, 70, rp.r, 0, Math.PI * 2);
           ctx.stroke();
           ctx.restore();
         }
@@ -296,8 +320,9 @@
     function dispatch(text) {
       const clean = text.trim();
       if (!clean) return;
+      if (hideTimer) clearTimeout(hideTimer);
       playExecuteSound();
-      title.textContent = 'Thinking & Executing...';
+      title.textContent = 'Running...';
       sub.textContent = clean;
       chrome.runtime.sendMessage({ type: 'run_command', text: clean }, (res) => {
         if (chrome.runtime.lastError || !res) {
@@ -317,7 +342,7 @@
         const reply = res.spoken_response || 'Executed.';
         sub.textContent = reply;
         speak(reply);
-        const stayMs = reply.length > 70 ? 7500 : 3200;
+        const stayMs = reply.length > 70 ? 7500 : 2800;
         hideTimer = setTimeout(removeHud, stayMs);
       });
     }
@@ -333,11 +358,22 @@
       try {
         recognition = new SpeechCtor();
         recognition.lang = 'en-US';
-        recognition.interimResults = false;
+        recognition.interimResults = true;
         recognition.continuous = false;
         recognition.onresult = (ev) => {
-          const t = ev.results?.[0]?.[0]?.transcript || '';
-          if (t.trim()) dispatch(t);
+          let finalStr = '';
+          let interimStr = '';
+          for (let i = ev.resultIndex; i < ev.results.length; i++) {
+            const piece = ev.results[i][0]?.transcript || '';
+            if (ev.results[i].isFinal) finalStr += piece;
+            else interimStr += piece;
+          }
+          if (interimStr.trim()) {
+            sub.textContent = interimStr.trim();
+          }
+          if (finalStr.trim()) {
+            dispatch(finalStr);
+          }
         };
         recognition.onerror = () => {
           title.textContent = 'Type Command (Mic Busy)';
@@ -348,13 +384,11 @@
       } catch {
         inp.focus();
       }
-    } else {
-      inp.focus();
     }
   }
 
   const pressedKeys = new Set();
-  let lastChordTrigger = 0;
+  let lastTriggerAt = 0;
 
   window.addEventListener('blur', () => pressedKeys.clear());
   window.addEventListener(
@@ -371,19 +405,16 @@
       const k = e.key.toLowerCase();
       pressedKeys.add(k);
       const isAltDT = e.altKey && pressedKeys.has('d') && pressedKeys.has('t');
-      const isAltDOnly = e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && k === 'd';
+      const isAltD = e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && k === 'd';
 
-      if (isAltDT) {
+      if (isAltDT || isAltD) {
         e.preventDefault();
         e.stopPropagation();
-        lastChordTrigger = Date.now();
-        openFloatingOverlay();
-      } else if (isAltDOnly && Date.now() - lastChordTrigger > 500) {
-        setTimeout(() => {
-          if (!pressedKeys.has('t') && Date.now() - lastChordTrigger > 250 && !hostEl) {
-            openFloatingOverlay();
-          }
-        }, 160);
+        const now = Date.now();
+        if (now - lastTriggerAt > 240) {
+          lastTriggerAt = now;
+          openFloatingOverlay();
+        }
       } else if (e.key === 'Escape' && hostEl) {
         removeHud();
       }

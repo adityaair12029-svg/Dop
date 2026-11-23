@@ -85,6 +85,18 @@ export async function buildExtensionBundleZip(serverOrigin: string): Promise<Buf
       iconsFolder.file(`icon${size}.png`, buf);
     }
   }
+  if (iconsFolder) {
+    const customWhite = path.join(CUSTOM_ICON_DIR, 'icon128.png');
+    const defaultWhite = path.join(DEFAULT_EXT_DIR, 'icons', 'logo-white.png');
+    const whiteBuf = fs.existsSync(customWhite)
+      ? fs.readFileSync(customWhite)
+      : fs.existsSync(defaultWhite)
+        ? fs.readFileSync(defaultWhite)
+        : null;
+    if (whiteBuf) {
+      iconsFolder.file('logo-white.png', whiteBuf);
+    }
+  }
 
   const readme = `El Dorado Chrome & Microsoft Edge Extension (Manifest V3)
 ====================================================
