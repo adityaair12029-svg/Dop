@@ -12,6 +12,8 @@ import {
 import { TopBar, type DopeTab } from './components/TopBar';
 import { ConfirmationDialog } from './components/ConfirmationDialog';
 import { GoogleSignInModal } from './components/GoogleSignInModal';
+import { AntigravityLoginScreen } from './components/AntigravityLoginScreen';
+import { InteractiveClickFlow } from './components/InteractiveClickFlow';
 import { VoiceConsole, type GmailMessageItem, type HistoryRecord } from './components/VoiceConsole';
 import { CommandLibrary } from './components/CommandLibrary';
 import {
@@ -36,6 +38,10 @@ const DEFAULT_SETTINGS: AssistantSettingsState = {
 export default function App() {
   const [activeTab, setActiveTab] = useState<DopeTab>('console');
   const [account, setAccount] = useState<WorkspaceAccount | null>(null);
+  const [bypassGate] = useState<boolean>(() =>
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('autostart') === '1'
+  );
   const [gmailToken, setGmailToken] = useState<string | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [signInModalOpen, setSignInModalOpen] = useState(false);
@@ -67,8 +73,9 @@ export default function App() {
 
   // Sync Tailwind v4 dark class on <html>
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', settings.theme === 'dark');
-  }, [settings.theme]);
+    const isGate = !account && !bypassGate;
+    document.documentElement.classList.toggle('dark', isGate ? true : settings.theme === 'dark');
+  }, [settings.theme, account, bypassGate]);
 
   const loadWorkspaceData = useCallback(async () => {
     try {
@@ -271,8 +278,25 @@ export default function App() {
     }
   };
 
+  // Fullscreen Antigravity Login Gate before opening the main website
+  if (!account && !bypassGate) {
+    return (
+      <>
+        <InteractiveClickFlow theme="dark" />
+        <AntigravityLoginScreen
+          busy={isSigningIn}
+          errorMessage={signInError}
+          onGoogleLogin={(includeGmail) => handleGoogleSignIn(includeGmail)}
+          onWorkspaceLogin={handleWorkspaceSignIn}
+        />
+      </>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-white dark:bg-[#070708] text-[#0A0A0C] dark:text-white transition-colors duration-200">
+    <div className="min-h-screen bg-white dark:bg-[#070708] text-[#0A0A0C] dark:text-white transition-colors duration-200 ag-workspace-liftoff">
+      <InteractiveClickFlow theme={settings.theme} />
+
       <TopBar
         activeTab={activeTab}
         onSelectTab={setActiveTab}
@@ -297,7 +321,7 @@ export default function App() {
         {authBanner && (
           <div
             role="status"
-            className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-800 dark:text-amber-200 flex items-center justify-between gap-4"
+            className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-800 dark:text-amber-200 flex items-center justify-between gap-4 ag-flow-enter"
           >
             <span>{authBanner}</span>
             <button
@@ -310,110 +334,112 @@ export default function App() {
           </div>
         )}
 
-        {activeTab === 'console' && (
-          <VoiceConsole
-            theme={settings.theme}
-            onToggleTheme={() =>
-              void handleUpdateSettings({ theme: settings.theme === 'dark' ? 'light' : 'dark' })
-            }
-            userName={account?.displayName ?? 'Doptails'}
-            language={settings.language}
-            onChangeLanguage={(lang) => void handleUpdateSettings({ language: lang })}
-            voiceFeedbackEnabled={settings.voice_feedback_enabled}
-            onToggleVoiceFeedback={() =>
-              void handleUpdateSettings({
-                voice_feedback_enabled: !settings.voice_feedback_enabled,
-              })
-            }
-            history={history}
-            hasGmailToken={Boolean(gmailToken)}
-            gmailMessages={gmailMessages}
-            gmailLoading={gmailLoading}
-            gmailError={gmailError}
-            onFetchGmail={() => void fetchGmailInbox()}
-            onRequestGoogleSignIn={() => {
-              setSignInError(null);
-              setSignInModalOpen(true);
-            }}
-            onSubmitCommand={handleSubmitCommand}
-            onOpenExtensionStudio={() => setActiveTab('platforms')}
-          />
-        )}
-
-        {activeTab === 'commands' && (
-          <CommandLibrary
-            aliases={aliases}
-            onCreateAlias={async (alias: { phrase: string; action: ActionName; target?: string }) => {
-              const res = await fetch('/api/dope/aliases', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(alias),
-              });
-              if (!res.ok) {
-                const err = (await res.json().catch(() => ({}))) as { error?: string };
-                throw new Error(err.error || 'Failed to save custom alias.');
+        <div key={activeTab} className="ag-flow-enter">
+          {activeTab === 'console' && (
+            <VoiceConsole
+              theme={settings.theme}
+              onToggleTheme={() =>
+                void handleUpdateSettings({ theme: settings.theme === 'dark' ? 'light' : 'dark' })
               }
-              await loadWorkspaceData();
-            }}
-            onDeleteAlias={async (id) => {
-              await fetch(`/api/dope/aliases/${encodeURIComponent(id)}`, { method: 'DELETE' });
-              await loadWorkspaceData();
-            }}
-          />
-        )}
+              userName={account?.displayName ?? 'Doptails'}
+              language={settings.language}
+              onChangeLanguage={(lang) => void handleUpdateSettings({ language: lang })}
+              voiceFeedbackEnabled={settings.voice_feedback_enabled}
+              onToggleVoiceFeedback={() =>
+                void handleUpdateSettings({
+                  voice_feedback_enabled: !settings.voice_feedback_enabled,
+                })
+              }
+              history={history}
+              hasGmailToken={Boolean(gmailToken)}
+              gmailMessages={gmailMessages}
+              gmailLoading={gmailLoading}
+              gmailError={gmailError}
+              onFetchGmail={() => void fetchGmailInbox()}
+              onRequestGoogleSignIn={() => {
+                setSignInError(null);
+                setSignInModalOpen(true);
+              }}
+              onSubmitCommand={handleSubmitCommand}
+              onOpenExtensionStudio={() => setActiveTab('platforms')}
+            />
+          )}
 
-        {activeTab === 'devices' && (
-          <DeviceManager
-            devices={devices}
-            pendingPairings={pendingPairings}
-            onInitPairing={async (device_name, platform) => {
-              const res = await fetch('/api/dope/devices/pair/init', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ device_name, platform }),
-              });
-              if (!res.ok) return null;
-              const data = (await res.json()) as { pairing: PendingPairingRecord };
-              await loadWorkspaceData();
-              return data.pairing;
-            }}
-            onCompletePairing={async (code) => {
-              await fetch('/api/dope/devices/pair/complete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code }),
-              });
-              await loadWorkspaceData();
-            }}
-            onToggleApproval={async (id, approved) => {
-              await fetch(`/api/dope/devices/${encodeURIComponent(id)}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ remote_control_approved: approved }),
-              });
-              await loadWorkspaceData();
-            }}
-            onRevokeDevice={async (id) => {
-              await fetch(`/api/dope/devices/${encodeURIComponent(id)}`, { method: 'DELETE' });
-              await loadWorkspaceData();
-            }}
-          />
-        )}
+          {activeTab === 'commands' && (
+            <CommandLibrary
+              aliases={aliases}
+              onCreateAlias={async (alias: { phrase: string; action: ActionName; target?: string }) => {
+                const res = await fetch('/api/dope/aliases', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(alias),
+                });
+                if (!res.ok) {
+                  const err = (await res.json().catch(() => ({}))) as { error?: string };
+                  throw new Error(err.error || 'Failed to save custom alias.');
+                }
+                await loadWorkspaceData();
+              }}
+              onDeleteAlias={async (id) => {
+                await fetch(`/api/dope/aliases/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                await loadWorkspaceData();
+              }}
+            />
+          )}
 
-        {activeTab === 'platforms' && <PlatformStudio />}
+          {activeTab === 'devices' && (
+            <DeviceManager
+              devices={devices}
+              pendingPairings={pendingPairings}
+              onInitPairing={async (device_name, platform) => {
+                const res = await fetch('/api/dope/devices/pair/init', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ device_name, platform }),
+                });
+                if (!res.ok) return null;
+                const data = (await res.json()) as { pairing: PendingPairingRecord };
+                await loadWorkspaceData();
+                return data.pairing;
+              }}
+              onCompletePairing={async (code) => {
+                await fetch('/api/dope/devices/pair/complete', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ code }),
+                });
+                await loadWorkspaceData();
+              }}
+              onToggleApproval={async (id, approved) => {
+                await fetch(`/api/dope/devices/${encodeURIComponent(id)}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ remote_control_approved: approved }),
+                });
+                await loadWorkspaceData();
+              }}
+              onRevokeDevice={async (id) => {
+                await fetch(`/api/dope/devices/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                await loadWorkspaceData();
+              }}
+            />
+          )}
 
-        {activeTab === 'settings' && (
-          <SettingsPanel
-            settings={settings}
-            healthInfo={healthInfo}
-            hasGmailToken={Boolean(gmailToken)}
-            onUpdateSettings={handleUpdateSettings}
-            onClearHistory={async () => {
-              await fetch('/api/dope/history', { method: 'DELETE' });
-              await loadWorkspaceData();
-            }}
-          />
-        )}
+          {activeTab === 'platforms' && <PlatformStudio />}
+
+          {activeTab === 'settings' && (
+            <SettingsPanel
+              settings={settings}
+              healthInfo={healthInfo}
+              hasGmailToken={Boolean(gmailToken)}
+              onUpdateSettings={handleUpdateSettings}
+              onClearHistory={async () => {
+                await fetch('/api/dope/history', { method: 'DELETE' });
+                await loadWorkspaceData();
+              }}
+            />
+          )}
+        </div>
       </main>
 
       <GoogleSignInModal

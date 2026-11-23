@@ -43,6 +43,8 @@ export const AntigravityParticles: React.FC<AntigravityParticlesProps> = ({
   className = '',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const activeRef = useRef(active);
+  activeRef.current = active;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -55,20 +57,23 @@ export const AntigravityParticles: React.FC<AntigravityParticlesProps> = ({
       typeof window !== 'undefined' &&
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-    const particles: Particle[] = Array.from({ length: 84 }, (_, idx) => ({
+    const particles: Particle[] = Array.from({ length: 88 }, (_, idx) => ({
       angle: ((idx * 137.508) % 360) * (Math.PI / 180),
       radiusRatio: 0.14 + ((idx * 19) % 100) / 105,
-      speed: 0.00055 + ((idx % 7) * 0.00018),
-      drift: (idx % 11) * 0.0004,
-      length: 3 + (idx % 4) * 1.4,
+      speed: 0.00075 + (idx % 7) * 0.00022,
+      drift: (idx % 11) * 0.00045,
+      length: 3.2 + (idx % 4) * 1.4,
       thickness: 1.7 + (idx % 2) * 0.6,
       color: palette[idx % palette.length],
-      alpha: theme === 'dark' ? 0.28 + (idx % 5) * 0.08 : 0.42 + (idx % 4) * 0.1,
+      alpha: theme === 'dark' ? 0.3 + (idx % 5) * 0.08 : 0.44 + (idx % 4) * 0.1,
     }));
 
     let rafId: number | null = null;
     let width = 0;
     let height = 0;
+    let flowSurge = 0;
+    let pointerNormX = 0;
+    let pointerNormY = 0;
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
@@ -83,18 +88,34 @@ export const AntigravityParticles: React.FC<AntigravityParticlesProps> = ({
     resize();
     window.addEventListener('resize', resize);
 
-    let tick = 0;
+    const onPointerMove = (e: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        pointerNormX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+        pointerNormY = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+      }
+      flowSurge = Math.min(3.0, flowSurge + 0.12);
+    };
+
+    const onBurst = () => {
+      flowSurge = 3.2;
+    };
+
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    window.addEventListener('pointerdown', onBurst, { passive: true });
+    window.addEventListener('keydown', onBurst, { passive: true });
+
     const drawFrame = () => {
       ctx.clearRect(0, 0, width, height);
-      const cx = width * 0.5;
-      const cy = height * 0.42;
+      const cx = width * 0.5 + pointerNormX * 14;
+      const cy = height * 0.42 + pointerNormY * 10;
       const maxR = Math.hypot(width, height) * 0.52;
-      const speedMult = active ? 2.1 : 1;
+      const speedMult = (activeRef.current ? 2.4 : 1.0) + flowSurge;
 
       for (const p of particles) {
         if (!prefersReduced) {
           p.radiusRatio += p.speed * speedMult;
-          p.angle += p.drift * 0.35;
+          p.angle += p.drift * (0.45 + flowSurge * 0.45);
           if (p.radiusRatio > 1.08) {
             p.radiusRatio = 0.12;
           }
@@ -104,7 +125,6 @@ export const AntigravityParticles: React.FC<AntigravityParticlesProps> = ({
         const x = cx + Math.cos(p.angle) * r;
         const y = cy + Math.sin(p.angle) * r * 0.78;
 
-        // Soft fade near center logo and outer perimeter
         const edgeFade =
           p.radiusRatio < 0.22
             ? (p.radiusRatio - 0.12) / 0.1
@@ -112,18 +132,26 @@ export const AntigravityParticles: React.FC<AntigravityParticlesProps> = ({
               ? (1.08 - p.radiusRatio) / 0.16
               : 1;
 
+        const streakLength = p.length + flowSurge * 2.2;
+
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate(p.angle);
-        ctx.globalAlpha = Math.max(0, Math.min(1, p.alpha * edgeFade));
+        ctx.globalAlpha = Math.max(0, Math.min(1, p.alpha * edgeFade * (1 + flowSurge * 0.15)));
         ctx.fillStyle = p.color;
         ctx.beginPath();
-        ctx.roundRect(-p.length * 0.5, -p.thickness * 0.5, p.length, p.thickness, p.thickness * 0.5);
+        ctx.roundRect(
+          -streakLength * 0.5,
+          -p.thickness * 0.5,
+          streakLength,
+          p.thickness,
+          p.thickness * 0.5
+        );
         ctx.fill();
         ctx.restore();
       }
 
-      tick += 1;
+      flowSurge *= 0.92;
       if (!prefersReduced) {
         rafId = requestAnimationFrame(drawFrame);
       }
@@ -133,10 +161,12 @@ export const AntigravityParticles: React.FC<AntigravityParticlesProps> = ({
 
     return () => {
       window.removeEventListener('resize', resize);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerdown', onBurst);
+      window.removeEventListener('keydown', onBurst);
       if (rafId !== null) cancelAnimationFrame(rafId);
-      void tick;
     };
-  }, [theme, active]);
+  }, [theme]);
 
   return (
     <canvas

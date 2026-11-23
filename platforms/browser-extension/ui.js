@@ -57,6 +57,10 @@ function initAntigravityParticles() {
 
   let width = 380;
   let height = 560;
+  let flowSurge = 0;
+  let pointerOffsetX = 0;
+  let pointerOffsetY = 0;
+  const ripples = [];
 
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -69,36 +73,72 @@ function initAntigravityParticles() {
   resize();
   window.addEventListener('resize', resize);
 
+  window.addEventListener('pointermove', (e) => {
+    pointerOffsetX = ((e.clientX / Math.max(width, 1)) - 0.5) * 18;
+    pointerOffsetY = ((e.clientY / Math.max(height, 1)) - 0.5) * 14;
+    flowSurge = Math.min(2.6, flowSurge + 0.14);
+  }, { passive: true });
+
+  window.addEventListener('pointerdown', (e) => {
+    flowSurge = 3.0;
+    ripples.push({ x: e.clientX, y: e.clientY, r: 4, alpha: 0.55 });
+  }, { passive: true });
+
+  window.addEventListener('keydown', () => {
+    flowSurge = 2.6;
+    ripples.push({ x: width * 0.5, y: height * 0.3, r: 8, alpha: 0.45 });
+  }, { passive: true });
+
   function frame() {
     ctx.clearRect(0, 0, width, height);
     const palette = currentTheme === 'dark' ? DARK_COLORS : LIGHT_COLORS;
-    const cx = width * 0.5;
-    const cy = height * 0.3;
+    const cx = width * 0.5 + pointerOffsetX;
+    const cy = height * 0.3 + pointerOffsetY;
     const maxR = Math.hypot(width, height) * 0.55;
-    const speedMult = isListening ? 2.2 : 1;
+    const speedMult = (isListening ? 2.4 : 1.0) + flowSurge;
 
     for (const p of particles) {
       if (!prefersReduced) {
         p.radiusRatio += p.speed * speedMult;
-        p.angle += p.drift * 0.35;
+        p.angle += p.drift * (0.4 + flowSurge * 0.45);
         if (p.radiusRatio > 1.06) p.radiusRatio = 0.12;
       }
       const r = p.radiusRatio * maxR;
       const x = cx + Math.cos(p.angle) * r;
       const y = cy + Math.sin(p.angle) * r * 0.82;
       const edgeFade = p.radiusRatio < 0.2 ? (p.radiusRatio - 0.1) / 0.1 : 1;
+      const streak = p.length + flowSurge * 2.0;
 
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(p.angle);
-      ctx.globalAlpha = Math.max(0, Math.min(1, (currentTheme === 'dark' ? 0.32 : 0.45) * edgeFade));
+      ctx.globalAlpha = Math.max(0, Math.min(1, (currentTheme === 'dark' ? 0.34 : 0.46) * edgeFade));
       ctx.fillStyle = palette[p.idx % palette.length];
       ctx.beginPath();
-      ctx.roundRect(-p.length * 0.5, -p.thickness * 0.5, p.length, p.thickness, p.thickness * 0.5);
+      ctx.roundRect(-streak * 0.5, -p.thickness * 0.5, streak, p.thickness, p.thickness * 0.5);
       ctx.fill();
       ctx.restore();
     }
 
+    for (let i = ripples.length - 1; i >= 0; i--) {
+      const rp = ripples[i];
+      rp.r += 5.5;
+      rp.alpha *= 0.91;
+      if (rp.alpha < 0.03 || rp.r > 130) {
+        ripples.splice(i, 1);
+        continue;
+      }
+      ctx.save();
+      ctx.strokeStyle = currentTheme === 'dark' ? '#2F71E3' : '#2F75C3';
+      ctx.globalAlpha = rp.alpha;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    flowSurge *= 0.92;
     if (!prefersReduced) {
       requestAnimationFrame(frame);
     }

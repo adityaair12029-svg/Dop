@@ -118,13 +118,20 @@ body {
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.16s ease, background-color 0.16s ease, transform 0.16s ease;
+  transition: border-color 0.16s ease, background-color 0.16s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
 }
 
 .icon-btn:hover {
   border-color: var(--ag-accent);
   background: var(--ag-surface-2);
+}
+
+.icon-btn:active,
+.quick-btn:active,
+.mic-orb:active,
+.input-row button:active {
+  transform: scale(0.955);
 }
 
 .icon-btn.active {
@@ -378,11 +385,12 @@ body {
   border: 1px solid var(--ag-border);
   border-radius: 16px;
   padding: 6px 6px 6px 14px;
-  transition: border-color 0.16s ease;
+  transition: border-color 0.18s ease, box-shadow 0.22s ease;
 }
 
 .input-row:focus-within {
   border-color: var(--ag-accent);
+  box-shadow: 0 0 0 3px rgba(47, 113, 227, 0.18);
 }
 
 .input-row input {

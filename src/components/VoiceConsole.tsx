@@ -148,6 +148,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
   const [micPermissionError, setMicPermissionError] = useState<string | null>(null);
   const [liveTranscript, setLiveTranscript] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [composerPulse, setComposerPulse] = useState(false);
   const [downloadBusy, setDownloadBusy] = useState<'extension' | 'desktop' | null>(null);
   const [downloadNote, setDownloadNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [lastResult, setLastResult] = useState<{
@@ -633,7 +634,13 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
               </div>
 
               {/* Antigravity Sleek Rounded Composer Box */}
-              <div className="mt-6 w-full rounded-2xl border border-black/10 dark:border-white/[0.11] bg-[#F7F8FA]/95 dark:bg-[#0D0D10]/95 backdrop-blur-md p-4 shadow-sm">
+              <div
+                className={`mt-6 w-full rounded-2xl border bg-[#F7F8FA]/95 dark:bg-[#0D0D10]/95 backdrop-blur-md p-4 shadow-sm transition-all duration-200 ${
+                  composerPulse || isListening || isSubmitting
+                    ? 'border-[#2F71E3] ag-composer-pulse'
+                    : 'border-black/10 dark:border-white/[0.11] focus-within:border-[#2F71E3]/70'
+                }`}
+              >
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <div className="text-xs font-medium text-[#5F6368] dark:text-neutral-400">
                     {isListening
@@ -692,7 +699,11 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                     id="dope-command-input"
                     type="text"
                     value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
+                    onChange={(e) => {
+                      setInputText(e.target.value);
+                      setComposerPulse(true);
+                      window.setTimeout(() => setComposerPulse(false), 320);
+                    }}
                     placeholder='Ask anything ("25 * 48", "Who invented Python?") or say "YouTube kholo"'
                     className="w-full bg-transparent text-sm text-[#0A0A0C] dark:text-white placeholder:text-[#5F6368] dark:placeholder:text-neutral-500 focus:outline-none"
                   />

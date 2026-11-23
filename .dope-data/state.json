@@ -1,6 +1,87 @@
 {
   "history": [
     {
+      "id": "cmd-a8aa92bd",
+      "timestamp": "2026-11-23T12:38:52.602Z",
+      "raw_input": "Hey Dop, what is 25 * 48?",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "answer_question",
+        "platform": "web",
+        "requires_confirmation": false
+      },
+      "spoken_response": "25 * 48 = 1200.",
+      "status": "executed",
+      "ai_source": "offline_fallback"
+    },
+    {
+      "id": "cmd-1e01fd92",
+      "timestamp": "2026-11-23T12:36:51.759Z",
+      "raw_input": "Hey Dop, go to page 15.",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "pdf_navigate_page",
+        "platform": "web",
+        "requires_confirmation": false,
+        "parameters": {
+          "page": 15
+        }
+      },
+      "spoken_response": "Navigating to page 15.",
+      "status": "executed",
+      "ai_source": "offline_fallback"
+    },
+    {
+      "id": "cmd-fd95f124",
+      "timestamp": "2026-11-23T12:36:44.584Z",
+      "raw_input": "Hey Dop, who invented Python?",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "answer_question",
+        "platform": "web",
+        "requires_confirmation": false
+      },
+      "spoken_response": "Full AI Q&A ke liye AI Studio Secrets panel me GEMINI_API_KEY add karein. Abhi aap math, date/time, factual Wikipedia sawal, ya browser/desktop commands chala sakte hain.",
+      "status": "executed",
+      "ai_source": "offline_fallback",
+      "error_detail": "GEMINI_API_KEY is not configured."
+    },
+    {
+      "id": "cmd-ebe1e58a",
+      "timestamp": "2026-11-23T12:35:42.752Z",
+      "raw_input": "Hey Dop, open YouTube.",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "open_url",
+        "target": "https://www.youtube.com",
+        "platform": "web",
+        "requires_confirmation": false
+      },
+      "spoken_response": "Opening YouTube.",
+      "status": "executed",
+      "ai_source": "offline_fallback"
+    },
+    {
+      "id": "cmd-971600f7",
+      "timestamp": "2026-11-23T12:35:41.162Z",
+      "raw_input": "Hey Dop, open YouTube.",
+      "wake_word_detected": true,
+      "language_hint": "auto",
+      "action": {
+        "action": "open_url",
+        "target": "https://www.youtube.com",
+        "platform": "web",
+        "requires_confirmation": false
+      },
+      "spoken_response": "Opening YouTube.",
+      "status": "executed",
+      "ai_source": "offline_fallback"
+    },
+    {
       "id": "cmd-234466a8",
       "timestamp": "2026-11-23T12:22:11.325Z",
       "raw_input": "Hey Dop, what is 25 * 48?",

@@ -233,32 +233,61 @@
     shadow.append(style, card);
     document.documentElement.appendChild(hostEl);
 
-    // Render Antigravity radial particles inside HUD background
+    // Render Antigravity radial particles inside HUD background with key/click flow
     const ctx = bgCanvas.getContext('2d');
     if (ctx) {
       const colors = ['#2F71E3', '#60A5FA', '#818CF8', '#A78BFA', '#F87171', '#FBBF24'];
-      const particles = Array.from({ length: 28 }, (_, i) => ({
+      const particles = Array.from({ length: 30 }, (_, i) => ({
         angle: ((i * 137.508) % 360) * (Math.PI / 180),
         r: 0.15 + ((i * 17) % 100) / 110,
         speed: 0.0022 + (i % 5) * 0.0005,
         color: colors[i % colors.length],
       }));
+      let hudSurge = 0;
+      const hudRipples = [];
+      const boostHud = () => {
+        hudSurge = 2.8;
+        hudRipples.push({ r: 6, alpha: 0.55 });
+      };
+      inp.addEventListener('keydown', boostHud);
+      card.addEventListener('pointerdown', boostHud);
+
       const animateHudParticles = () => {
         if (!hostEl) return;
         ctx.clearRect(0, 0, 344, 140);
         for (const p of particles) {
-          p.r += p.speed;
+          p.r += p.speed * (1 + hudSurge);
+          p.angle += 0.0018 * (1 + hudSurge);
           if (p.r > 1.05) p.r = 0.12;
           const x = 172 + Math.cos(p.angle) * (p.r * 190);
           const y = 65 + Math.sin(p.angle) * (p.r * 95);
+          const len = 4 + hudSurge * 1.8;
           ctx.save();
           ctx.translate(x, y);
           ctx.rotate(p.angle);
-          ctx.globalAlpha = 0.32;
+          ctx.globalAlpha = Math.min(0.8, 0.34 + hudSurge * 0.08);
           ctx.fillStyle = p.color;
-          ctx.fillRect(-2, -0.8, 4, 1.6);
+          ctx.fillRect(-len * 0.5, -0.8, len, 1.6);
           ctx.restore();
         }
+        for (let i = hudRipples.length - 1; i >= 0; i--) {
+          const rp = hudRipples[i];
+          rp.r += 4.5;
+          rp.alpha *= 0.9;
+          if (rp.alpha < 0.03) {
+            hudRipples.splice(i, 1);
+            continue;
+          }
+          ctx.save();
+          ctx.strokeStyle = '#2F71E3';
+          ctx.globalAlpha = rp.alpha;
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.arc(172, 65, rp.r, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+        hudSurge *= 0.92;
         particleRaf = requestAnimationFrame(animateHudParticles);
       };
       particleRaf = requestAnimationFrame(animateHudParticles);
