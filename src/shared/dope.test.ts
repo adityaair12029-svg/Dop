@@ -7,8 +7,8 @@ const webContext: ActiveViewerContext = {
   platform: 'web',
   companion_connected: false,
   extension_connected: false,
-  active_app: 'DOPE Web Console',
-  active_window_title: 'DOPE PDF Testbench',
+  active_app: 'El Dorado Web Console',
+  active_window_title: 'El Dorado PDF Testbench',
   pdf_viewer_type: 'browser_pdf_testbench',
 };
 
@@ -21,12 +21,12 @@ const windowsConnectedContext: ActiveViewerContext = {
   pdf_viewer_type: 'adobe_acrobat',
 };
 
-test('TEST 1: Wake word detection & open YouTube', () => {
-  const wake = detectWakeWord('Hey Dop, open YouTube.');
+test('TEST 1: Wake word detection ("Hey El Dorado") & open YouTube', () => {
+  const wake = detectWakeWord('Hey El Dorado, open YouTube.');
   assert.equal(wake.detected, true);
   assert.equal(wake.command_text, 'open YouTube.');
 
-  const parsed = parseOfflineCommand('Hey Dop, open YouTube.', webContext);
+  const parsed = parseOfflineCommand('Hey El Dorado, open YouTube.', webContext);
   assert.equal(parsed.matched, true);
   assert.equal(parsed.supported, true);
   assert.equal(parsed.action?.action, 'open_url');
@@ -35,17 +35,17 @@ test('TEST 1: Wake word detection & open YouTube', () => {
 });
 
 test('TEST 2 & 3 & 4: PDF scroll down, zoom in, and go to page 15', () => {
-  const scroll = parseOfflineCommand('Hey Dop, scroll down.', webContext);
+  const scroll = parseOfflineCommand('Hey El Dorado, scroll down.', webContext);
   assert.equal(scroll.action?.action, 'scroll');
   assert.equal(scroll.action?.parameters?.direction, 'down');
   assert.equal(scroll.supported, true);
 
-  const zoom = parseOfflineCommand('Hey Dop, zoom in.', webContext);
+  const zoom = parseOfflineCommand('Hey El Dorado, zoom in.', webContext);
   assert.equal(zoom.action?.action, 'zoom');
   assert.equal(zoom.action?.parameters?.direction, 'in');
   assert.equal(zoom.supported, true);
 
-  const page15 = parseOfflineCommand('Hey Dop, go to page 15.', webContext);
+  const page15 = parseOfflineCommand('Hey El Dorado, go to page 15.', webContext);
   assert.equal(page15.action?.action, 'pdf_navigate_page');
   assert.equal(page15.action?.parameters?.page, 15);
   assert.equal(page15.supported, true);
@@ -56,46 +56,51 @@ test('TEST 4b: Unsupported PDF viewer honestly rejects page navigation', () => {
     ...webContext,
     pdf_viewer_type: 'unsupported_viewer',
   };
-  const page15 = parseOfflineCommand('Hey Dop, go to page 15.', unsupportedCtx);
+  const page15 = parseOfflineCommand('Hey El Dorado, go to page 15.', unsupportedCtx);
   assert.equal(page15.supported, false);
   assert.match(page15.unsupported_reason ?? '', /does not expose page-jump controls/i);
 });
 
 test('TEST 5 & 6: Desktop window minimize & Chrome launch require connected Desktop Companion', () => {
-  const minOffline = parseOfflineCommand('Hey Dop, minimize this window.', {
+  const minOffline = parseOfflineCommand('Hey El Dorado, minimize this window.', {
     ...windowsConnectedContext,
     companion_connected: false,
   });
   assert.equal(minOffline.supported, false);
   assert.match(minOffline.unsupported_reason ?? '', /Desktop Companion is not connected/i);
 
-  const minOnline = parseOfflineCommand('Hey Dop, minimize this window.', windowsConnectedContext);
+  const minOnline = parseOfflineCommand('Hey El Dorado, minimize this window.', windowsConnectedContext);
   assert.equal(minOnline.supported, true);
   assert.equal(minOnline.action?.action, 'minimize_window');
 
-  const chromeOnline = parseOfflineCommand('Hey Dop, open Chrome.', windowsConnectedContext);
+  const chromeOnline = parseOfflineCommand('Hey El Dorado, open Chrome.', windowsConnectedContext);
   assert.equal(chromeOnline.supported, true);
   assert.equal(chromeOnline.action?.action, 'open_app');
   assert.equal(chromeOnline.action?.target, 'Chrome');
 });
 
 test('TEST 7: Stop listening command works cleanly', () => {
-  const stop = parseOfflineCommand('Hey Dop, stop listening.', webContext);
+  const stop = parseOfflineCommand('Hey El Dorado, stop listening.', webContext);
   assert.equal(stop.matched, true);
   assert.equal(stop.action?.action, 'stop_listening');
   assert.equal(stop.supported, true);
 });
 
-test('TEST 9: Ambiguous command triggers clarification request', () => {
-  const ambiguous = parseOfflineCommand('Hey Dop, open', webContext);
+test('TEST 9: Ambiguous command triggers clarification request in English', () => {
+  const ambiguous = parseOfflineCommand('Hey El Dorado, open', webContext);
   assert.equal(ambiguous.ambiguous, true);
   assert.equal(ambiguous.action?.action, 'clarify');
   assert.ok(ambiguous.clarification_question);
+  assert.match(ambiguous.clarification_question ?? '', /ambiguous/i);
+
+  const bareWake = parseOfflineCommand('Hey El Dorado', webContext);
+  assert.equal(bareWake.ambiguous, true);
+  assert.match(bareWake.clarification_question ?? '', /El Dorado/i);
 });
 
 test('TEST 10: Consequential actions always enforce confirmation', () => {
   const email = parseOfflineCommand(
-    'Hey Dop, send an email to alex@example.com saying Hello',
+    'Hey El Dorado, send an email to alex@example.com saying Hello',
     webContext
   );
   assert.equal(email.action?.action, 'send_email');
@@ -144,12 +149,12 @@ test('Security: Blocks unsafe URL schemes and unlisted actions', () => {
   assert.equal(arbitraryShell.valid, false);
 });
 
-test('Multilingual Hinglish & Custom Alias support', () => {
-  const hinglish = parseOfflineCommand('Hey Dop, YouTube chalao', webContext);
-  assert.equal(hinglish.action?.action, 'open_url');
-  assert.equal(hinglish.action?.target, 'https://www.youtube.com');
+test('Custom Alias & Legacy Wake Fallback support', () => {
+  const legacyWake = parseOfflineCommand('Hey Dop, open YouTube', webContext);
+  assert.equal(legacyWake.action?.action, 'open_url');
+  assert.equal(legacyWake.action?.target, 'https://www.youtube.com');
 
-  const customAlias = parseOfflineCommand('Hey Dop, study mode', webContext, [
+  const customAlias = parseOfflineCommand('Hey El Dorado, study mode', webContext, [
     {
       id: 'a1',
       phrase: 'study mode',
@@ -162,12 +167,12 @@ test('Multilingual Hinglish & Custom Alias support', () => {
   assert.equal(customAlias.action?.target, 'https://www.wikipedia.org');
 });
 
-test('Chrome Extension ZIP bundle, Alt+D shortcut & new Chrome commands', async () => {
+test('Chrome Extension ZIP bundle (El Dorado v1.5.0), Alt+D shortcut & browser commands', async () => {
   const { buildExtensionBundleZip, saveCustomExtensionIcons } = await import(
     '../../server/extensionZip'
   );
   const { default: JSZip } = await import('jszip');
-  const zipBuf = await buildExtensionBundleZip('https://example.dope.local');
+  const zipBuf = await buildExtensionBundleZip('https://dopextention.vercel.app');
   assert.equal(zipBuf.subarray(0, 4).toString('hex'), '504b0304'); // PK\x03\x04
 
   const parsedZip = await JSZip.loadAsync(zipBuf);
@@ -177,11 +182,13 @@ test('Chrome Extension ZIP bundle, Alt+D shortcut & new Chrome commands', async 
   assert.ok(parsedZip.file('icons/icon128.png'), 'icons/icon128.png must exist');
   const manifestJson = JSON.parse(await parsedZip.file('manifest.json')!.async('string'));
   assert.equal(manifestJson.manifest_version, 3);
+  assert.equal(manifestJson.name, 'El Dorado Assistant');
+  assert.equal(manifestJson.version, '1.5.0');
   assert.equal(manifestJson.commands['activate-dope'].suggested_key.default, 'Alt+D');
   const bgJs = await parsedZip.file('background.js')!.async('string');
-  assert.ok(bgJs.includes('https://example.dope.local'));
+  assert.ok(bgJs.includes('https://dopextention.vercel.app'));
 
-  const newTabCmd = parseOfflineCommand('Hey Dop, naya tab kholo', {
+  const newTabCmd = parseOfflineCommand('Hey El Dorado, new tab', {
     ...webContext,
     platform: 'browser_extension',
     extension_connected: true,
@@ -189,7 +196,7 @@ test('Chrome Extension ZIP bundle, Alt+D shortcut & new Chrome commands', async 
   assert.equal(newTabCmd.action?.action, 'new_tab');
   assert.equal(newTabCmd.supported, true);
 
-  const ytSearch = parseOfflineCommand('Hey Dop, YouTube pe lofi music chalao', {
+  const ytSearch = parseOfflineCommand('Hey El Dorado, play lofi music on YouTube', {
     ...webContext,
     platform: 'browser_extension',
     extension_connected: true,
@@ -205,43 +212,43 @@ test('Chrome Extension ZIP bundle, Alt+D shortcut & new Chrome commands', async 
   assert.equal(rejected, false);
 });
 
-test('AI Q&A offline fallback (math, time, date, identity) & Desktop Assistant ZIP bundle', async () => {
-  const mathCmd = parseOfflineCommand('Hey Dop, what is 25 * 48?', webContext);
+test('AI Q&A pure English fallback (math, time, date, El Dorado identity) & Desktop ZIP bundle', async () => {
+  const mathCmd = parseOfflineCommand('Hey El Dorado, what is 25 * 48?', webContext);
   assert.equal(mathCmd.matched, true);
   assert.equal(mathCmd.supported, true);
   assert.equal(mathCmd.action?.action, 'answer_question');
   assert.match(mathCmd.spoken_response, /1200/);
 
-  const hinglishMath = parseOfflineCommand('Hey Dop, 100 + 250 kitna hota hai?', webContext);
-  assert.equal(hinglishMath.matched, true);
-  assert.equal(hinglishMath.action?.action, 'answer_question');
-  assert.match(hinglishMath.spoken_response, /350/);
+  const addMath = parseOfflineCommand('Hey El Dorado, calculate 100 + 250', webContext);
+  assert.equal(addMath.matched, true);
+  assert.equal(addMath.action?.action, 'answer_question');
+  assert.match(addMath.spoken_response, /350/);
 
-  const timeCmd = parseOfflineCommand('Hey Dop, time kya hua hai?', webContext);
+  const timeCmd = parseOfflineCommand('Hey El Dorado, what is the current time?', webContext);
   assert.equal(timeCmd.matched, true);
   assert.equal(timeCmd.action?.action, 'answer_question');
-  assert.ok(timeCmd.spoken_response.length > 5);
+  assert.match(timeCmd.spoken_response, /current time/i);
 
-  const identityCmd = parseOfflineCommand('Hey Dop, who are you?', webContext);
+  const identityCmd = parseOfflineCommand('Hey El Dorado, who are you?', webContext);
   assert.equal(identityCmd.matched, true);
   assert.equal(identityCmd.action?.action, 'answer_question');
-  assert.match(identityCmd.spoken_response, /DOPE/);
+  assert.match(identityCmd.spoken_response, /El Dorado/i);
 
   const { buildDesktopBundleZip } = await import('../../server/desktopZip');
   const { default: JSZip } = await import('jszip');
-  const desktopBuf = await buildDesktopBundleZip('https://example.dope.local');
+  const desktopBuf = await buildDesktopBundleZip('https://dopextention.vercel.app');
   assert.equal(desktopBuf.subarray(0, 4).toString('hex'), '504b0304');
 
   const parsedDesktop = await JSZip.loadAsync(desktopBuf);
   assert.ok(parsedDesktop.file('manifest.json'), 'manifest.json must be in Desktop ZIP so Chrome Load unpacked also succeeds');
   assert.ok(parsedDesktop.file('icons/icon128.png'), 'icons/icon128.png must be in Desktop ZIP');
-  assert.ok(parsedDesktop.file('dope_companion.py'), 'dope_companion.py must be in desktop ZIP');
+  assert.ok(parsedDesktop.file('el_dorado_companion.py'), 'el_dorado_companion.py must be in desktop ZIP');
   assert.ok(parsedDesktop.file('INSTALL_DESKTOP.txt'), 'INSTALL_DESKTOP.txt must be in desktop ZIP');
   assert.equal(parsedDesktop.file('Run-DOPE-Desktop.bat'), null, 'No .bat scripts inside ZIP so Chrome Safe Browsing does not block download');
   assert.equal(parsedDesktop.file('adapters/__init__.py'), null, 'No _-prefixed files so Chrome Load unpacked accepts the folder');
   assert.ok(parsedDesktop.file('adapters/windows_adapter.py'), 'windows_adapter.py must be in desktop ZIP');
-  const pyCode = await parsedDesktop.file('dope_companion.py')!.async('string');
-  assert.ok(pyCode.includes('https://example.dope.local'));
+  const pyCode = await parsedDesktop.file('el_dorado_companion.py')!.async('string');
+  assert.ok(pyCode.includes('https://dopextention.vercel.app'));
   assert.ok(pyCode.includes('alt+d+t'));
   assert.ok(pyCode.includes('bootstrap_dependencies'));
   assert.ok(pyCode.includes('dont_write_bytecode'));

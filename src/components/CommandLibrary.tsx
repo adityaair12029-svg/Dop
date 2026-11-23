@@ -48,7 +48,6 @@ export const CommandLibrary: React.FC<CommandLibraryProps> = ({
       if (!q) return true;
       return (
         cmd.voice_phrase.toLowerCase().includes(q) ||
-        (cmd.hinglish_phrase ?? '').toLowerCase().includes(q) ||
         cmd.action.toLowerCase().includes(q) ||
         cmd.category.toLowerCase().includes(q)
       );
@@ -142,11 +141,6 @@ export const CommandLibrary: React.FC<CommandLibraryProps> = ({
                   <div className="font-medium text-[#0A0A0C] dark:text-white">
                     {item.voice_phrase}
                   </div>
-                  {item.hinglish_phrase && (
-                    <div className="text-xs text-[#5F6368] dark:text-neutral-400 mt-0.5">
-                      Hinglish: {item.hinglish_phrase}
-                    </div>
-                  )}
                 </td>
                 <td className="py-3.5 px-4 align-top">
                   <code className="font-mono text-xs text-[#2F75C3] dark:text-[#60A5FA]">
@@ -185,7 +179,7 @@ export const CommandLibrary: React.FC<CommandLibraryProps> = ({
           Custom Voice Aliases
         </h2>
         <p className="text-xs text-[#5F6368] dark:text-neutral-400 mt-1">
-          Map short personal phrases (for example, &ldquo;Hey Dop, morning briefing&rdquo;) to an
+          Map short personal phrases (for example, &ldquo;Hey El Dorado, morning briefing&rdquo;) to an
           allowlisted action.
         </p>
 

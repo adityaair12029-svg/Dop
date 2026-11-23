@@ -11,9 +11,9 @@ interface AntigravityLoginScreenProps {
 }
 
 /**
- * Full-viewport Antigravity-style Welcome & Login Gate matching the exact
- * visual hierarchy, palette, glowing particle horizon, and pill buttons
- * before entering the DOPE website workspace.
+ * Full-viewport Welcome & Login Gate matching the exact visual hierarchy,
+ * palette, glowing particle horizon, and pill buttons before entering
+ * the El Dorado website workspace.
  */
 export const AntigravityLoginScreen: React.FC<AntigravityLoginScreenProps> = ({
   busy,
@@ -24,7 +24,7 @@ export const AntigravityLoginScreen: React.FC<AntigravityLoginScreenProps> = ({
   const [mode, setMode] = useState<'main' | 'business'>('main');
   const [showTroublePanel, setShowTroublePanel] = useState(false);
   const [includeGmail, setIncludeGmail] = useState(false);
-  const [name, setName] = useState('Doptails');
+  const [name, setName] = useState('Explorer');
   const [email, setEmail] = useState('');
   const [formErr, setFormErr] = useState<string | null>(null);
 
@@ -53,14 +53,14 @@ export const AntigravityLoginScreen: React.FC<AntigravityLoginScreenProps> = ({
         </div>
 
         <h1 className="text-[28px] sm:text-[31px] font-normal tracking-[-0.025em] text-center text-white mb-7">
-          Welcome to DOPE!
+          Welcome to El Dorado!
         </h1>
 
         {/* Dark Rounded Card Container */}
         <div className="w-full rounded-[18px] bg-[#0B0C0F]/92 border border-white/[0.08] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.75)] backdrop-blur-md">
           {mode === 'main' ? (
             <div className="space-y-2.5 ag-flow-enter">
-              {/* Primary Antigravity Blue Pill CTA */}
+              {/* Primary Royal Blue Pill CTA */}
               <button
                 type="button"
                 disabled={busy}
@@ -108,7 +108,7 @@ export const AntigravityLoginScreen: React.FC<AntigravityLoginScreenProps> = ({
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Doptails"
+                  placeholder="Explorer"
                   className="w-full rounded-xl border border-white/10 bg-[#141519] px-3.5 py-2.5 text-sm text-white placeholder:text-neutral-500 focus:outline-none focus:border-[#3275F4]"
                 />
               </div>
@@ -134,7 +134,7 @@ export const AntigravityLoginScreen: React.FC<AntigravityLoginScreenProps> = ({
                 className="ag-pressable w-full h-11 rounded-full bg-[#3275F4] hover:bg-[#3F82FF] text-white text-[14px] font-medium flex items-center justify-center gap-2 shadow-[0_6px_24px_rgba(50,117,244,0.32)] cursor-pointer"
               >
                 <Check className="w-4 h-4" />
-                <span>Open DOPE Website</span>
+                <span>Open El Dorado Website</span>
               </button>
             </form>
           )}
@@ -147,11 +147,11 @@ export const AntigravityLoginScreen: React.FC<AntigravityLoginScreenProps> = ({
               <div>{errorMessage}</div>
               <button
                 type="button"
-                onClick={() => onWorkspaceLogin('Doptails', '')}
+                onClick={() => onWorkspaceLogin('Explorer', '')}
                 className="ag-pressable mt-2 inline-flex items-center gap-1.5 rounded-full bg-white text-[#070708] px-3 py-1 text-[11px] font-semibold cursor-pointer"
               >
                 <Check className="w-3 h-3" />
-                <span>Continue directly as Doptails</span>
+                <span>Continue directly as Explorer</span>
               </button>
             </div>
           )}
@@ -189,7 +189,7 @@ export const AntigravityLoginScreen: React.FC<AntigravityLoginScreenProps> = ({
               </span>
               <button
                 type="button"
-                onClick={() => onWorkspaceLogin('Doptails', '')}
+                onClick={() => onWorkspaceLogin('Explorer', '')}
                 className="ag-pressable rounded-full bg-[#1C1D22] hover:bg-[#25272E] border border-white/10 px-3 py-1 text-[11px] font-medium text-white cursor-pointer"
               >
                 Quick Enter

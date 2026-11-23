@@ -20,7 +20,7 @@ export const GoogleSignInModal: React.FC<GoogleSignInModalProps> = ({
   onWorkspaceLogin,
 }) => {
   const [includeGmail, setIncludeGmail] = useState(false);
-  const [name, setName] = useState('Doptails');
+  const [name, setName] = useState('Explorer');
   const [email, setEmail] = useState('');
   const [formErr, setFormErr] = useState<string | null>(null);
 
@@ -51,10 +51,10 @@ export const GoogleSignInModal: React.FC<GoogleSignInModalProps> = ({
             </div>
             <div>
               <h2 id="ag-signin-title" className="text-lg font-semibold tracking-tight">
-                Sign in to DOPE
+                Sign in to El Dorado
               </h2>
               <p className="text-xs text-[#5F6368] dark:text-neutral-400">
-                Sync your Antigravity voice workspace &amp; Google account
+                Sync your El Dorado voice workspace &amp; Google account
               </p>
             </div>
           </div>
@@ -124,7 +124,7 @@ export const GoogleSignInModal: React.FC<GoogleSignInModalProps> = ({
           <div className="relative flex items-center py-1">
             <div className="flex-grow border-t border-black/10 dark:border-white/10" />
             <span className="px-3 text-[11px] font-medium text-[#5F6368] dark:text-neutral-400">
-              or continue in Antigravity Workspace
+              or continue in El Dorado Workspace
             </span>
             <div className="flex-grow border-t border-black/10 dark:border-white/10" />
           </div>
@@ -142,7 +142,7 @@ export const GoogleSignInModal: React.FC<GoogleSignInModalProps> = ({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Doptails"
+                placeholder="e.g. Explorer"
                 className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-[#F7F8FA] dark:bg-[#141418] px-3.5 py-2 text-sm text-[#0A0A0C] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#2F71E3]"
               />
             </div>
@@ -171,7 +171,7 @@ export const GoogleSignInModal: React.FC<GoogleSignInModalProps> = ({
               className="w-full inline-flex items-center justify-center gap-2 rounded-full border border-black/15 dark:border-white/15 bg-transparent px-4 py-2 text-xs font-medium text-[#0A0A0C] dark:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
             >
               <Check className="w-3.5 h-3.5 text-[#2F71E3]" />
-              <span>Enter Workspace as {name.trim() || 'Doptails'}</span>
+              <span>Enter Workspace as {name.trim() || 'Explorer'}</span>
             </button>
           </form>
 

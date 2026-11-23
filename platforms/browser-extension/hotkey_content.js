@@ -79,7 +79,7 @@
       if (!text || !('speechSynthesis' in window)) return;
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'en-IN';
+      u.lang = 'en-US';
       u.rate = 1.04;
       window.speechSynthesis.speak(u);
     } catch {
@@ -202,7 +202,7 @@
     const txtWrap = document.createElement('div');
     const title = document.createElement('div');
     title.className = 'title';
-    title.textContent = 'DOPE Listening (Alt + D + T)';
+    title.textContent = 'El Dorado Listening (Alt + D + T)';
     const sub = document.createElement('div');
     sub.className = 'sub';
     sub.textContent = 'Good to see you. Speak a command or ask AI...';
@@ -233,7 +233,7 @@
     shadow.append(style, card);
     document.documentElement.appendChild(hostEl);
 
-    // Render Antigravity radial particles inside HUD background with key/click flow
+    // Render radial particle streams inside HUD background with key/click flow
     const ctx = bgCanvas.getContext('2d');
     if (ctx) {
       const colors = ['#2F71E3', '#60A5FA', '#818CF8', '#A78BFA', '#F87171', '#FBBF24'];
@@ -309,7 +309,7 @@
         }
         if (res.ok) {
           playSuccessSound();
-          title.textContent = res.action?.action === 'answer_question' ? 'DOPE AI Answer' : 'Done';
+          title.textContent = res.action?.action === 'answer_question' ? 'El Dorado AI Answer' : 'Done';
         } else {
           playErrorSound();
           title.textContent = 'Notice';
@@ -332,7 +332,7 @@
     if (SpeechCtor) {
       try {
         recognition = new SpeechCtor();
-        recognition.lang = 'en-IN';
+        recognition.lang = 'en-US';
         recognition.interimResults = false;
         recognition.continuous = false;
         recognition.onresult = (ev) => {
@@ -341,7 +341,7 @@
         };
         recognition.onerror = () => {
           title.textContent = 'Type Command (Mic Busy)';
-          sub.textContent = 'Press Enter or open DOPE Side Panel.';
+          sub.textContent = 'Press Enter or open El Dorado Side Panel.';
           inp.focus();
         };
         recognition.start();

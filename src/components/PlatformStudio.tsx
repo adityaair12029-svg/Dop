@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BookOpen, Check, Code2, Copy, Download, Laptop, Puzzle, Upload } from 'lucide-react';
-import { downloadVerifiedZip } from '../lib/downloadZip';
+import { downloadVerifiedZip, loadLocalCustomLogo, saveLocalCustomLogo } from '../lib/downloadZip';
+import { BUNDLED_DOCS, BUNDLED_PLATFORM_FILES, isJsonResponse } from '../lib/vercelLocalEngine';
 
 interface PlatformFile {
   platform: string;
@@ -33,40 +34,46 @@ function resizeImageToPngDataUrl(img: HTMLImageElement, size: number): string {
 
 export const PlatformStudio: React.FC = () => {
   const [mode, setMode] = useState<'guides' | 'source'>('guides');
-  const [docs, setDocs] = useState<DocEntry[]>([]);
-  const [selectedDocName, setSelectedDocName] = useState<string>('README.md');
-  const [platformFiles, setPlatformFiles] = useState<PlatformFile[]>([]);
+  const [docs, setDocs] = useState<DocEntry[]>(BUNDLED_DOCS);
+  const [selectedDocName, setSelectedDocName] = useState<string>(BUNDLED_DOCS[0].name);
+  const [platformFiles, setPlatformFiles] = useState<PlatformFile[]>(BUNDLED_PLATFORM_FILES);
   const [selectedPlatform, setSelectedPlatform] = useState<string>('browser-extension');
-  const [selectedFilePath, setSelectedFilePath] = useState<string>('');
+  const [selectedFilePath, setSelectedFilePath] = useState<string>(
+    BUNDLED_PLATFORM_FILES[0].path
+  );
   const [copied, setCopied] = useState(false);
 
   const [iconVersion, setIconVersion] = useState<number>(1);
+  const [localPreviewSrc, setLocalPreviewSrc] = useState<string | null>(
+    () => loadLocalCustomLogo()?.icon128 ?? null
+  );
   const [iconLoadError, setIconLoadError] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
   const [downloadingExt, setDownloadingExt] = useState(false);
   const [downloadingDesk, setDownloadingDesk] = useState(false);
   const [copiedCmd, setCopiedCmd] = useState(false);
+  const [copiedExtPage, setCopiedExtPage] = useState(false);
   const [logoStatus, setLogoStatus] = useState<{ ok: boolean; text: string } | null>(null);
   const [desktopStatus, setDesktopStatus] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
     fetch('/api/dope/docs')
-      .then((r) => r.json())
-      .then((data: { docs?: DocEntry[] }) => {
-        const list = data.docs ?? [];
-        setDocs(list);
-        if (list.length > 0 && !list.some((d) => d.name === selectedDocName)) {
-          setSelectedDocName(list[0].name);
+      .then(async (r) => (isJsonResponse(r) ? r.json() : null))
+      .then((data: { docs?: DocEntry[] } | null) => {
+        if (!data?.docs?.length) return;
+        setDocs(data.docs);
+        if (!data.docs.some((d) => d.name === selectedDocName)) {
+          setSelectedDocName(data.docs[0].name);
         }
       })
       .catch(() => {});
 
     fetch('/api/dope/platform-files')
-      .then((r) => r.json())
-      .then((data: { files?: PlatformFile[] }) => {
-        const list = data.files ?? [];
-        setPlatformFiles(list);
-        const firstMatch = list.find((f) => f.platform === 'browser-extension') ?? list[0];
+      .then(async (r) => (isJsonResponse(r) ? r.json() : null))
+      .then((data: { files?: PlatformFile[] } | null) => {
+        if (!data?.files?.length) return;
+        setPlatformFiles(data.files);
+        const firstMatch = data.files.find((f) => f.platform === 'browser-extension') ?? data.files[0];
         if (firstMatch) {
           setSelectedPlatform(firstMatch.platform);
           setSelectedFilePath(firstMatch.path);
@@ -92,25 +99,35 @@ export const PlatformStudio: React.FC = () => {
           const icon48 = resizeImageToPngDataUrl(img, 48);
           const icon128 = resizeImageToPngDataUrl(img, 128);
 
-          const res = await fetch('/api/dope/extension/logo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ icon16, icon48, icon128 }),
-          });
-          const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
-          if (!res.ok || !data.ok) {
-            setLogoStatus({
-              ok: false,
-              text: data.error || 'Could not save custom logo.',
+          saveLocalCustomLogo({ icon16, icon48, icon128 });
+          setLocalPreviewSrc(icon128);
+          setIconLoadError(false);
+          setIconVersion((v) => v + 1);
+
+          try {
+            const res = await fetch('/api/dope/extension/logo', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ icon16, icon48, icon128 }),
             });
-          } else {
-            setIconLoadError(false);
-            setIconVersion((v) => v + 1);
-            setLogoStatus({
-              ok: true,
-              text: 'Custom logo saved to extension bundle (16px, 48px, 128px PNG). Download the ZIP again to apply it in Chrome.',
-            });
+            if (isJsonResponse(res)) {
+              const data = (await res.json()) as { ok?: boolean; error?: string };
+              if (data.ok) {
+                setLogoStatus({
+                  ok: true,
+                  text: 'Custom logo saved to extension bundle (16px, 48px, 128px PNG). Download the ZIP to apply it in Chrome.',
+                });
+                return;
+              }
+            }
+          } catch {
+            // Fall through to client-bundled logo status
           }
+
+          setLogoStatus({
+            ok: true,
+            text: 'Custom logo saved locally in your browser (16px, 48px, 128px PNG). Click Download El Dorado Extension (.zip) to generate your custom ZIP.',
+          });
         } catch (err: unknown) {
           setLogoStatus({
             ok: false,
@@ -156,10 +173,10 @@ export const PlatformStudio: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-black/10 dark:border-white/[0.08] pb-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-[#0A0A0C] dark:text-white">
-            Chrome Extension Studio &amp; Platform Guides
+            El Dorado Extension Studio &amp; Platform Guides
           </h1>
           <p className="text-sm text-[#5F6368] dark:text-neutral-400 mt-0.5">
-            Upload your custom DOPE logo, download the Antigravity-themed Chrome Extension (.zip), and inspect all native adapters.
+            Upload a custom El Dorado logo, download the verified Chrome Extension (.zip), and inspect all native adapters.
           </p>
         </div>
 
@@ -174,7 +191,7 @@ export const PlatformStudio: React.FC = () => {
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
-            <span>14 User Guides</span>
+            <span>User Guides</span>
           </button>
           <button
             type="button"
@@ -196,10 +213,16 @@ export const PlatformStudio: React.FC = () => {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
             <div className="w-16 h-16 rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#070708] flex items-center justify-center overflow-hidden shrink-0">
-              {!iconLoadError ? (
+              {localPreviewSrc ? (
                 <img
-                  src={`/api/dope/extension/icon.png?v=${iconVersion}`}
-                  alt="DOPE Extension Logo Preview"
+                  src={localPreviewSrc}
+                  alt="El Dorado Extension Logo Preview"
+                  className="w-14 h-14 object-contain"
+                />
+              ) : !iconLoadError ? (
+                <img
+                  src={`/downloads/el-dorado-icon-128.png?v=${iconVersion}`}
+                  alt="El Dorado Extension Logo Preview"
                   className="w-14 h-14 object-contain"
                   onError={() => setIconLoadError(true)}
                 />
@@ -209,22 +232,40 @@ export const PlatformStudio: React.FC = () => {
             </div>
             <div>
               <h2 className="text-base font-semibold text-[#0A0A0C] dark:text-white">
-                DOPE Chrome &amp; Edge Extension (Antigravity Theme v1.4)
+                El Dorado Chrome &amp; Edge Extension (v1.5)
               </h2>
               <p className="text-xs text-[#5F6368] dark:text-neutral-400 mt-1 max-w-2xl leading-relaxed">
-                Full Antigravity obsidian &amp; light theme inside popup, side panel, and on-page{' '}
+                Includes full dark &amp; light theme inside popup, side panel, and on-page{' '}
                 <kbd className="font-mono px-1.5 py-0.5 rounded border border-black/10 dark:border-white/15 text-[#0A0A0C] dark:text-white">
                   Alt+D+T
                 </kbd>{' '}
-                floating command HUD — with radial particles, sweet bell chimes, and Gemini AI Q&amp;A.
+                floating command HUD — with radial particles, harmonic chimes, and &ldquo;Hey El Dorado&rdquo; AI Q&amp;A.
               </p>
-              <ol className="mt-3 text-xs text-[#5F6368] dark:text-neutral-300 space-y-1 list-decimal list-inside">
+              <ol className="mt-3 text-xs text-[#5F6368] dark:text-neutral-300 space-y-1.5 list-decimal list-inside">
                 <li>Optional: upload your own PNG/JPG/SVG logo below to bundle it into the extension.</li>
                 <li>
-                  Click <strong>Download Chrome Extension (.zip)</strong>, then <strong>Right-click &rarr; Extract All</strong> into a folder.
+                  Click <strong>Download El Dorado Extension (.zip)</strong>, then <strong>Right-click &rarr; Extract All</strong> into a folder.
                 </li>
-                <li>
-                  Open <code className="font-mono">chrome://extensions</code>, turn ON <strong>Developer mode</strong>, click <strong>Load unpacked</strong>, and select the extracted folder containing <code className="font-mono">manifest.json</code>.
+                <li className="flex flex-wrap items-center gap-2">
+                  <span>
+                    Open <code className="font-mono">chrome://extensions</code>, turn ON <strong>Developer mode</strong>, click <strong>Load unpacked</strong>, and select the extracted folder.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText('chrome://extensions');
+                        setCopiedExtPage(true);
+                        setTimeout(() => setCopiedExtPage(false), 1800);
+                      } catch {
+                        // Ignore clipboard restrictions
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 rounded-full border border-black/15 dark:border-white/15 bg-white dark:bg-[#070708] px-2.5 py-0.5 text-[11px] font-medium cursor-pointer"
+                  >
+                    {copiedExtPage ? <Check className="w-3 h-3 text-[#2F71E3]" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedExtPage ? 'Copied!' : 'Copy chrome://extensions'}</span>
+                  </button>
                 </li>
               </ol>
             </div>
@@ -262,7 +303,7 @@ export const PlatformStudio: React.FC = () => {
                 } catch (err: unknown) {
                   setLogoStatus({
                     ok: false,
-                    text: err instanceof Error ? err.message : 'Failed to download Chrome Extension ZIP.',
+                    text: err instanceof Error ? err.message : 'Failed to download El Dorado Extension ZIP.',
                   });
                 } finally {
                   setDownloadingExt(false);
@@ -271,7 +312,7 @@ export const PlatformStudio: React.FC = () => {
               className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-medium rounded-full bg-[#2F75C3] dark:bg-[#2F71E3] text-white hover:opacity-90 disabled:opacity-60 transition-opacity whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Download className="w-4 h-4" />
-              <span>{downloadingExt ? 'Building Verified ZIP...' : 'Download Chrome Extension (.zip)'}</span>
+              <span>{downloadingExt ? 'Building Verified ZIP...' : 'Download El Dorado Extension (.zip)'}</span>
             </button>
           </div>
         </div>
@@ -299,10 +340,10 @@ export const PlatformStudio: React.FC = () => {
             </div>
             <div>
               <h2 className="text-base font-semibold text-[#0A0A0C] dark:text-white">
-                DOPE Universal Laptop + Chrome Bundle (Home Screen &amp; All Apps)
+                El Dorado Universal Laptop + Chrome Bundle (Home Screen &amp; All Apps)
               </h2>
               <p className="text-xs text-[#5F6368] dark:text-neutral-400 mt-1 max-w-2xl leading-relaxed">
-                Includes <strong>both</strong> the Antigravity Chrome Extension v1.4 (<code className="font-mono">manifest.json</code>) <strong>and</strong> the Windows/Mac/Linux Python Desktop Companion (<code className="font-mono">dope_companion.py</code>). Press{' '}
+                Includes <strong>both</strong> the El Dorado Chrome Extension v1.5 (<code className="font-mono">manifest.json</code>) <strong>and</strong> the Windows/Mac/Linux Python Desktop Companion (<code className="font-mono">el_dorado_companion.py</code>). Press{' '}
                 <kbd className="font-mono px-1.5 py-0.5 rounded border border-black/10 dark:border-white/15 text-[#0A0A0C] dark:text-white">
                   Alt+D+T
                 </kbd>{' '}
@@ -316,7 +357,7 @@ export const PlatformStudio: React.FC = () => {
                   In Chrome: <code className="font-mono">chrome://extensions</code> &rarr; <strong>Load unpacked</strong> &rarr; select the extracted folder.
                 </li>
                 <li>
-                  For Windows Home Screen &amp; outside Chrome: run <code className="font-mono">python dope_companion.py</code> in that folder and press <kbd className="font-mono px-1.5 py-0.5 rounded border border-black/10 dark:border-white/15">Alt+D+T</kbd> anywhere!
+                  For Windows Home Screen &amp; outside Chrome: run <code className="font-mono">python el_dorado_companion.py</code> in that folder and press <kbd className="font-mono px-1.5 py-0.5 rounded border border-black/10 dark:border-white/15">Alt+D+T</kbd> anywhere!
                 </li>
               </ol>
             </div>
@@ -327,7 +368,7 @@ export const PlatformStudio: React.FC = () => {
               type="button"
               onClick={async () => {
                 try {
-                  await navigator.clipboard.writeText('python dope_companion.py');
+                  await navigator.clipboard.writeText('python el_dorado_companion.py');
                   setCopiedCmd(true);
                   setTimeout(() => setCopiedCmd(false), 1800);
                 } catch {
@@ -349,7 +390,7 @@ export const PlatformStudio: React.FC = () => {
                   const info = await downloadVerifiedZip({ kind: 'desktop' });
                   setDesktopStatus({
                     ok: true,
-                    text: `Downloaded ${info.filename} (${Math.round(info.byteLength / 1024)} KB, verified ZIP). Extract All -> Load unpacked in chrome://extensions AND run python dope_companion.py for Desktop Home Screen!`,
+                    text: `Downloaded ${info.filename} (${Math.round(info.byteLength / 1024)} KB, verified ZIP). Extract All -> Load unpacked in chrome://extensions AND run python el_dorado_companion.py for Desktop Home Screen!`,
                   });
                 } catch (err: unknown) {
                   setDesktopStatus({

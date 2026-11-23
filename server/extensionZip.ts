@@ -86,7 +86,7 @@ export async function buildExtensionBundleZip(serverOrigin: string): Promise<Buf
     }
   }
 
-  const readme = `DOPE Chrome & Microsoft Edge Extension (Manifest V3)
+  const readme = `El Dorado Chrome & Microsoft Edge Extension (Manifest V3)
 ====================================================
 IMPORTANT: Do NOT drag this .zip file directly onto chrome://extensions.
 Chrome treats unextracted .zip files as invalid CRX packages.
@@ -96,10 +96,10 @@ How to install in 30 seconds:
 2. Open chrome://extensions (or edge://extensions).
 3. Turn ON "Developer mode" (top-right toggle).
 4. Click "Load unpacked" and select the extracted folder containing manifest.json.
-5. Pin "DOPE Assistant" to your toolbar or press Alt+D+T (or Alt+D) on any Chrome tab to activate voice + sweet chimes!
-6. Want Alt+D+T on your Windows Laptop Home Screen / outside Chrome too? Download DOPE-Desktop-Assistant.zip from the Platforms tab!
+5. Pin "El Dorado Assistant" to your toolbar or press Alt+D+T (or Alt+D) on any Chrome tab to activate voice + chimes!
+6. Want Alt+D+T on your Laptop Home Screen / outside Chrome too? Download El-Dorado-Desktop-Assistant.zip from the Platforms tab!
 
-Default DOPE Backend URL: ${safeOrigin}
+Default El Dorado Backend URL: ${safeOrigin}
 `;
   zip.file('INSTALL.txt', readme);
 

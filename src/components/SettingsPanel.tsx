@@ -47,11 +47,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           Settings, Theme &amp; Diagnostics
         </h1>
         <p className="text-sm text-[#5F6368] dark:text-neutral-400 mt-0.5">
-          Antigravity Default Light &amp; Default Dark palettes, wake-word preferences, and system checks.
+          El Dorado Default Light &amp; Default Dark palettes, wake-word preferences, and system checks.
         </p>
       </div>
 
-      {/* Antigravity Color Presets Matching Screenshot 2 */}
+      {/* Color Presets */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section className="rounded-2xl border border-black/10 dark:border-white/[0.08] bg-[#F7F8FA] dark:bg-[#0D0D10] p-6 space-y-4">
           <div className="flex items-center justify-between gap-4">

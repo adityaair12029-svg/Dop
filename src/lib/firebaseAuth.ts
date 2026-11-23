@@ -22,7 +22,7 @@ export interface WorkspaceAccount {
   hasGmailToken: boolean;
 }
 
-const LOCAL_PROFILE_STORAGE_KEY = 'dope_antigravity_workspace_profile_v1';
+const LOCAL_PROFILE_STORAGE_KEY = 'el_dorado_workspace_profile_v1';
 
 const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -74,7 +74,7 @@ function saveLocalProfile(account: WorkspaceAccount | null): void {
 function fromFirebaseUser(user: User): WorkspaceAccount {
   return {
     uid: user.uid,
-    displayName: user.displayName || user.email?.split('@')[0] || 'DOPE User',
+    displayName: user.displayName || user.email?.split('@')[0] || 'El Dorado User',
     email: user.email || '',
     photoURL: user.photoURL || null,
     provider: 'google_firebase',
@@ -101,19 +101,19 @@ export function formatGoogleAuthError(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err ?? '');
 
   if (code === 'auth/popup-blocked') {
-    return 'Browser blocked the Google popup. Allow popups for this site or use Antigravity Workspace Sign-In below.';
+    return 'Browser blocked the Google popup. Allow popups for this site or use El Dorado Workspace Sign-In below.';
   }
   if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
-    return 'Google sign-in popup was closed before finishing. Try again or continue with Antigravity Workspace Sign-In below.';
+    return 'Google sign-in popup was closed before finishing. Try again or continue with El Dorado Workspace Sign-In below.';
   }
   if (code === 'auth/unauthorized-domain') {
-    return 'This preview domain is not allowlisted for Firebase Google popup. Trying direct Google Identity / Antigravity Workspace sign-in instead.';
+    return 'This preview domain is not allowlisted for Firebase Google popup. Trying direct Google Identity / El Dorado Workspace sign-in instead.';
   }
   if (code === 'auth/operation-not-allowed') {
-    return 'Google provider is disabled in Firebase Console. Use Antigravity Workspace Sign-In below or enable Google Auth.';
+    return 'Google provider is disabled in Firebase Console. Use El Dorado Workspace Sign-In below or enable Google Auth.';
   }
   if (code === 'auth/network-request-failed') {
-    return 'Network interrupted while reaching Google Auth. Check your connection or use Antigravity Workspace Sign-In below.';
+    return 'Network interrupted while reaching Google Auth. Check your connection or use El Dorado Workspace Sign-In below.';
   }
   return msg || 'Could not complete Google Sign-In.';
 }
@@ -281,7 +281,7 @@ export async function googleSignIn(options?: {
 }
 
 export function continueWithAntigravityProfile(name: string, email: string): WorkspaceAccount {
-  const cleanName = name.trim() || 'Doptails';
+  const cleanName = name.trim() || 'Explorer';
   const cleanEmail = email.trim() || `${cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '')}@workspace.local`;
   const account: WorkspaceAccount = {
     uid: `ag-${cleanEmail}`,

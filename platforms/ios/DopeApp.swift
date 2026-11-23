@@ -21,7 +21,7 @@ struct DopeHomeView: View {
                     .font(.system(size: 64))
                     .foregroundStyle(.blue)
 
-                Text("DOPE Companion")
+                Text("El Dorado Companion")
                     .font(.title2.bold())
 
                 Text(statusMessage)
@@ -38,13 +38,13 @@ struct DopeHomeView: View {
                 }
                 .buttonStyle(.borderedProminent)
 
-                Text("iOS Limitation: Continuous background custom wake-word ('Hey Dop') is restricted by iOS. Use Siri Shortcuts or Home Widgets for hands-free launch.")
+                Text("iOS Limitation: Continuous background custom wake-word ('Hey El Dorado') is restricted by iOS. Use Siri Shortcuts or Home Widgets for hands-free launch.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .padding()
             }
-            .navigationTitle("DOPE")
+            .navigationTitle("El Dorado")
         }
     }
 }

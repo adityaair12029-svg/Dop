@@ -50,7 +50,7 @@ export const TopBar: React.FC<TopBarProps> = ({
     return () => document.removeEventListener('mousedown', onDocClick);
   }, [menuOpen]);
 
-  const initials = (account?.displayName || account?.email || 'D')
+  const initials = (account?.displayName || account?.email || 'E')
     .trim()
     .charAt(0)
     .toUpperCase();
@@ -58,14 +58,14 @@ export const TopBar: React.FC<TopBarProps> = ({
   return (
     <header className="sticky top-0 z-40 border-b border-black/10 dark:border-white/[0.08] bg-white/85 dark:bg-[#070708]/85 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 md:py-0 md:h-16 flex flex-wrap md:flex-nowrap items-center justify-between gap-x-8 gap-y-2">
-        {/* Zone 1: Single-line Antigravity brand mark + DOPE wordmark */}
+        {/* Zone 1: Single-line brand mark + El Dorado wordmark */}
         <button
           type="button"
           onClick={() => onSelectTab('console')}
           className="inline-flex items-center gap-2.5 text-[17px] font-semibold tracking-tight text-[#0A0A0C] dark:text-white whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-[#2F71E3] rounded-lg cursor-pointer"
         >
           <AntigravityMark variant="color" className="w-6 h-6 shrink-0" />
-          <span>DOPE</span>
+          <span>El Dorado</span>
         </button>
 
         {/* Zone 3: Single primary action / signed-in account popover */}
@@ -105,7 +105,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                     </div>
                     <div className="text-[11px] text-[#2F75C3] dark:text-[#60A5FA] mt-1">
                       {account.provider === 'antigravity_workspace'
-                        ? 'Antigravity Workspace Profile'
+                        ? 'El Dorado Workspace Profile'
                         : hasGmailToken
                           ? 'Google Account · Gmail Connected'
                           : 'Google Account Connected'}

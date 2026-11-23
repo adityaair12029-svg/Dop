@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "DOPE Assistant",
-  "version": "1.4.0",
-  "description": "Antigravity-themed AI voice assistant for Chrome and Edge. Press Alt+D+T (or Alt+D) or say 'Hey Dop' to ask AI questions & control Chrome with sweet chimes.",
+  "name": "El Dorado Assistant",
+  "version": "1.5.0",
+  "description": "AI voice assistant for Chrome and Edge. Press Alt+D+T (or Alt+D) or say 'Hey El Dorado' to ask AI questions & control Chrome with harmonic chimes.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -29,7 +29,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "DOPE Assistant (Alt+D)",
+    "default_title": "El Dorado Assistant (Alt+D)",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -49,7 +49,7 @@
         "default": "Alt+D",
         "mac": "Alt+D"
       },
-      "description": "Activate DOPE Voice Assistant (Alt+D)"
+      "description": "Activate El Dorado Voice Assistant (Alt+D)"
     }
   }
 }

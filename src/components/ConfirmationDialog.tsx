@@ -45,7 +45,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
                 Confirm Consequential Action
               </h2>
               <p className="text-xs text-[#5F6368] dark:text-neutral-400 mt-0.5">
-                DOPE requires your explicit approval before executing this operation.
+                El Dorado requires your explicit approval before executing this operation.
               </p>
             </div>
           </div>

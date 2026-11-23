@@ -23,6 +23,21 @@ import {
 } from './components/DeviceManager';
 import { PlatformStudio } from './components/PlatformStudio';
 import { SettingsPanel, type AssistantSettingsState } from './components/SettingsPanel';
+import {
+  isJsonResponse,
+  loadLocalState,
+  localClearHistory,
+  localCompletePairing,
+  localConfirmDecision,
+  localCreateAlias,
+  localDeleteAlias,
+  localInitPairing,
+  localRevokeDevice,
+  localToggleApproval,
+  localUpdateSettings,
+  runLocalCommandFallback,
+  validateActionTarget,
+} from './lib/vercelLocalEngine';
 
 const DEFAULT_SETTINGS: AssistantSettingsState = {
   theme: 'dark',
@@ -80,38 +95,52 @@ export default function App() {
   const loadWorkspaceData = useCallback(async () => {
     try {
       const [hRes, aRes, dRes, sRes, healthRes] = await Promise.all([
-        fetch('/api/dope/history'),
-        fetch('/api/dope/aliases'),
-        fetch('/api/dope/devices'),
-        fetch('/api/dope/settings'),
-        fetch('/api/dope/health'),
+        fetch('/api/dope/history').catch(() => null),
+        fetch('/api/dope/aliases').catch(() => null),
+        fetch('/api/dope/devices').catch(() => null),
+        fetch('/api/dope/settings').catch(() => null),
+        fetch('/api/dope/health').catch(() => null),
       ]);
-      if (hRes.ok) {
-        const d = (await hRes.json()) as { history: HistoryRecord[] };
-        setHistory(d.history);
+
+      if (hRes && isJsonResponse(hRes) && aRes && isJsonResponse(aRes) && sRes && isJsonResponse(sRes)) {
+        const h = (await hRes.json()) as { history: HistoryRecord[] };
+        const a = (await aRes.json()) as { aliases: CustomAlias[] };
+        const s = (await sRes.json()) as { settings: AssistantSettingsState };
+        setHistory(h.history);
+        setAliases(a.aliases);
+        setSettings(s.settings);
+        if (dRes && isJsonResponse(dRes)) {
+          const d = (await dRes.json()) as {
+            devices: DeviceRecord[];
+            pending_pairings: PendingPairingRecord[];
+          };
+          setDevices(d.devices);
+          setPendingPairings(d.pending_pairings);
+        }
+        if (healthRes && isJsonResponse(healthRes)) {
+          setHealthInfo(await healthRes.json());
+        }
+        return;
       }
-      if (aRes.ok) {
-        const d = (await aRes.json()) as { aliases: CustomAlias[] };
-        setAliases(d.aliases);
-      }
-      if (dRes.ok) {
-        const d = (await dRes.json()) as {
-          devices: DeviceRecord[];
-          pending_pairings: PendingPairingRecord[];
-        };
-        setDevices(d.devices);
-        setPendingPairings(d.pending_pairings);
-      }
-      if (sRes.ok) {
-        const d = (await sRes.json()) as { settings: AssistantSettingsState };
-        setSettings(d.settings);
-      }
-      if (healthRes.ok) {
-        const d = await healthRes.json();
-        setHealthInfo(d);
-      }
+
+      const local = loadLocalState();
+      setHistory(local.history);
+      setAliases(local.aliases);
+      setDevices(local.devices);
+      setPendingPairings(local.pending_pairings);
+      setSettings(local.settings);
+      setHealthInfo({
+        gemini_configured: false,
+        connected_devices: local.devices.filter((d) => d.status === 'connected').length,
+        catalog_count: 25,
+      });
     } catch {
-      // Keep UI responsive on transient network errors
+      const local = loadLocalState();
+      setHistory(local.history);
+      setAliases(local.aliases);
+      setDevices(local.devices);
+      setPendingPairings(local.pending_pairings);
+      setSettings(local.settings);
     }
   }, []);
 
@@ -196,14 +225,19 @@ export default function App() {
   const handleUpdateSettings = async (patch: Partial<AssistantSettingsState>) => {
     const optimistic = { ...settings, ...patch };
     setSettings(optimistic);
-    const res = await fetch('/api/dope/settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patch),
-    });
-    if (res.ok) {
-      const data = (await res.json()) as { settings: AssistantSettingsState };
-      setSettings(data.settings);
+    localUpdateSettings(patch);
+    try {
+      const res = await fetch('/api/dope/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+      if (isJsonResponse(res)) {
+        const data = (await res.json()) as { settings: AssistantSettingsState };
+        setSettings(data.settings);
+      }
+    } catch {
+      // Local state already updated cleanly for static Vercel deployments
     }
   };
 
@@ -223,18 +257,33 @@ export default function App() {
         { role: 'assistant' as const, text: h.spoken_response },
       ]);
 
-    const res = await fetch('/api/dope/command', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    let data: Awaited<ReturnType<typeof runLocalCommandFallback>> | null = null;
+    try {
+      const res = await fetch('/api/dope/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          language: settings.language,
+          context,
+          conversationHistory,
+        }),
+      });
+      if (isJsonResponse(res)) {
+        data = await res.json();
+      }
+    } catch {
+      // Fall back smoothly when no Express backend is present (e.g. Vercel static hosting)
+    }
+
+    if (!data) {
+      data = await runLocalCommandFallback({
         text,
         language: settings.language,
         context,
-        conversationHistory,
-      }),
-    });
+      });
+    }
 
-    const data = await res.json();
     await loadWorkspaceData();
 
     if (data?.status === 'awaiting_confirmation' && data?.action) {
@@ -258,18 +307,32 @@ export default function App() {
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
-      const res = await fetch('/api/dope/confirm', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          entryId: pendingConfirmation.entryId,
-          decision,
-          action: pendingConfirmation.action,
-        }),
-      });
-      const data = (await res.json()) as { spoken_response?: string };
-      if (data?.spoken_response && decision === 'confirm' && !res.ok) {
-        setAuthBanner(data.spoken_response);
+      let handledByServer = false;
+      try {
+        const res = await fetch('/api/dope/confirm', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            entryId: pendingConfirmation.entryId,
+            decision,
+            action: pendingConfirmation.action,
+          }),
+        });
+        if (isJsonResponse(res) || res.status === 400 || res.status === 401) {
+          const ct = res.headers.get('content-type') || '';
+          if (ct.includes('application/json')) {
+            handledByServer = true;
+            const data = (await res.json()) as { spoken_response?: string };
+            if (data?.spoken_response && decision === 'confirm' && !res.ok) {
+              setAuthBanner(data.spoken_response);
+            }
+          }
+        }
+      } catch {
+        // Use local fallback
+      }
+      if (!handledByServer) {
+        localConfirmDecision(pendingConfirmation.entryId, decision, pendingConfirmation.action);
       }
       setPendingConfirmation(null);
       await loadWorkspaceData();
@@ -278,7 +341,7 @@ export default function App() {
     }
   };
 
-  // Fullscreen Antigravity Login Gate before opening the main website
+  // Fullscreen Login Gate before opening the main El Dorado website
   if (!account && !bypassGate) {
     return (
       <>
@@ -341,7 +404,7 @@ export default function App() {
               onToggleTheme={() =>
                 void handleUpdateSettings({ theme: settings.theme === 'dark' ? 'light' : 'dark' })
               }
-              userName={account?.displayName ?? 'Doptails'}
+              userName={account?.displayName ?? 'Explorer'}
               language={settings.language}
               onChangeLanguage={(lang) => void handleUpdateSettings({ language: lang })}
               voiceFeedbackEnabled={settings.voice_feedback_enabled}
@@ -369,19 +432,33 @@ export default function App() {
             <CommandLibrary
               aliases={aliases}
               onCreateAlias={async (alias: { phrase: string; action: ActionName; target?: string }) => {
-                const res = await fetch('/api/dope/aliases', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(alias),
-                });
-                if (!res.ok) {
-                  const err = (await res.json().catch(() => ({}))) as { error?: string };
-                  throw new Error(err.error || 'Failed to save custom alias.');
+                const check = validateActionTarget(alias.action, alias.target);
+                if (!check.valid) {
+                  throw new Error(check.reason || 'Invalid action target for alias.');
                 }
+                try {
+                  const res = await fetch('/api/dope/aliases', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(alias),
+                  });
+                  if (isJsonResponse(res)) {
+                    await loadWorkspaceData();
+                    return;
+                  }
+                  if (res.status === 400) {
+                    const err = (await res.json().catch(() => ({}))) as { error?: string };
+                    throw new Error(err.error || 'Failed to save custom alias.');
+                  }
+                } catch (e) {
+                  if (e instanceof Error && /Invalid|Target|required/i.test(e.message)) throw e;
+                }
+                localCreateAlias(alias);
                 await loadWorkspaceData();
               }}
               onDeleteAlias={async (id) => {
-                await fetch(`/api/dope/aliases/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                localDeleteAlias(id);
+                await fetch(`/api/dope/aliases/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => {});
                 await loadWorkspaceData();
               }}
             />
@@ -392,34 +469,45 @@ export default function App() {
               devices={devices}
               pendingPairings={pendingPairings}
               onInitPairing={async (device_name, platform) => {
-                const res = await fetch('/api/dope/devices/pair/init', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ device_name, platform }),
-                });
-                if (!res.ok) return null;
-                const data = (await res.json()) as { pairing: PendingPairingRecord };
+                try {
+                  const res = await fetch('/api/dope/devices/pair/init', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ device_name, platform }),
+                  });
+                  if (isJsonResponse(res)) {
+                    const data = (await res.json()) as { pairing: PendingPairingRecord };
+                    await loadWorkspaceData();
+                    return data.pairing;
+                  }
+                } catch {
+                  // Fall back to local pairing code
+                }
+                const pairing = localInitPairing(device_name, platform);
                 await loadWorkspaceData();
-                return data.pairing;
+                return pairing;
               }}
               onCompletePairing={async (code) => {
+                localCompletePairing(code);
                 await fetch('/api/dope/devices/pair/complete', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ code }),
-                });
+                }).catch(() => {});
                 await loadWorkspaceData();
               }}
               onToggleApproval={async (id, approved) => {
+                localToggleApproval(id, approved);
                 await fetch(`/api/dope/devices/${encodeURIComponent(id)}`, {
                   method: 'PATCH',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ remote_control_approved: approved }),
-                });
+                }).catch(() => {});
                 await loadWorkspaceData();
               }}
               onRevokeDevice={async (id) => {
-                await fetch(`/api/dope/devices/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                localRevokeDevice(id);
+                await fetch(`/api/dope/devices/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => {});
                 await loadWorkspaceData();
               }}
             />
@@ -434,7 +522,8 @@ export default function App() {
               hasGmailToken={Boolean(gmailToken)}
               onUpdateSettings={handleUpdateSettings}
               onClearHistory={async () => {
-                await fetch('/api/dope/history', { method: 'DELETE' });
+                localClearHistory();
+                await fetch('/api/dope/history', { method: 'DELETE' }).catch(() => {});
                 await loadWorkspaceData();
               }}
             />

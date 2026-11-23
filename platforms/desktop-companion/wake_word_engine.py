@@ -1,5 +1,5 @@
 """
-Local wake-word detector for DOPE ("Hey Dop").
+Local wake-word detector for El Dorado ("Hey El Dorado").
 Processes microphone frames strictly locally on-device using openWakeWord (Apache 2.0).
 Audio is NEVER streamed to cloud APIs prior to wake-word activation.
 """

@@ -140,7 +140,7 @@ body {
   color: var(--ag-fg);
 }
 
-/* Antigravity Hero Stage */
+/* El Dorado Hero Stage */
 .orb-stage {
   background: var(--ag-surface);
   border: 1px solid var(--ag-border);
@@ -292,7 +292,7 @@ body {
   outline: none;
 }
 
-/* Antigravity Conversational Feed */
+/* El Dorado Conversational Feed */
 .feed {
   flex: 1;
   background: var(--ag-surface);
@@ -353,7 +353,7 @@ body {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
 }
 
-/* Antigravity Quick Starters */
+/* El Dorado Quick Starters */
 .quick-grid {
   display: flex;
   flex-wrap: wrap;
@@ -377,7 +377,7 @@ body {
   color: var(--ag-fg);
 }
 
-/* Antigravity Composer Box */
+/* El Dorado Composer Box */
 .input-row {
   display: flex;
   gap: 8px;

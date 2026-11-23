@@ -14,7 +14,7 @@ export async function buildDesktopBundleZip(serverOrigin: string): Promise<Buffe
 
   // Include Chrome Extension MV3 files at ZIP root (without any `_`-prefixed files)
   // so `Load unpacked` in chrome://extensions ALSO succeeds cleanly if selected,
-  // AND running `python dope_companion.py` starts the Whole-Laptop Desktop Assistant!
+  // AND running `python el_dorado_companion.py` starts the Whole-Laptop Desktop Assistant!
   const extFiles = [
     'manifest.json',
     'background.js',
@@ -47,13 +47,13 @@ export async function buildDesktopBundleZip(serverOrigin: string): Promise<Buffe
   // Include ONLY .py and .txt desktop companion files (zero .bat/.sh executables
   // and zero `_`-prefixed files like __init__.py so both Chrome Safe Browsing and
   // chrome://extensions Load unpacked accept the folder cleanly).
-  const rootFiles = ['dope_companion.py', 'wake_word_engine.py', 'requirements.txt'];
+  const rootFiles = ['el_dorado_companion.py', 'wake_word_engine.py', 'requirements.txt'];
 
   for (const file of rootFiles) {
     const full = path.join(DESKTOP_DIR, file);
     if (!fs.existsSync(full)) continue;
     let content = fs.readFileSync(full, 'utf-8');
-    if (file === 'dope_companion.py') {
+    if (file === 'el_dorado_companion.py') {
       content = content.replace('__DOPE_SERVER_URL__', safeOrigin);
     }
     zip.file(file, content);
@@ -69,21 +69,21 @@ export async function buildDesktopBundleZip(serverOrigin: string): Promise<Buffe
     }
   }
 
-  const readme = `DOPE Universal Package (Chrome Extension v1.3 + Whole-Laptop Desktop Assistant)
+  const readme = `El Dorado Universal Package (Chrome Extension v1.5 + Whole-Laptop Desktop Assistant)
 ==============================================================================
 This folder contains BOTH:
 1) Chrome & Microsoft Edge Extension (manifest.json):
    - Extract All -> open chrome://extensions -> Developer mode ON -> Load unpacked -> select this folder.
-   - Press Alt + D + T on any Chrome tab to open DOPE voice + AI Q&A + sweet chimes!
+   - Press Alt + D + T on any Chrome tab or say "Hey El Dorado" for voice + AI Q&A + chimes!
 
 2) Whole-Laptop Desktop Assistant (Windows Home Screen & All Apps):
    - Open Command Prompt / Terminal inside this extracted folder and run:
-       python dope_companion.py
+       python el_dorado_companion.py
    - First run auto-installs Python packages!
    - Then press Alt + D + T ANYWHERE on your laptop (Windows Home Screen, File Explorer,
-     VS Code, or when Chrome is closed) for sweet chimes, laptop mic, AI Q&A, and OS control!
+     VS Code, or when Chrome is closed) for chimes, laptop mic, AI Q&A, and OS control!
 
-Configured DOPE AI Backend URL: ${safeOrigin}
+Configured El Dorado AI Backend URL: ${safeOrigin}
 `;
   zip.file('INSTALL_DESKTOP.txt', readme);
 

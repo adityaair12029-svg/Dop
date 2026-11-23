@@ -20,7 +20,7 @@ let recognition = null;
 let isListening = false;
 let wakeMode = false;
 let soundEnabled = true;
-let selectedLang = 'en-IN';
+let selectedLang = 'en-US';
 let currentServerUrl = '';
 let currentTheme = 'dark';
 
@@ -32,7 +32,7 @@ function applyExtensionTheme(theme) {
   }
 }
 
-function initAntigravityParticles() {
+function initOrbParticles() {
   if (!particlesCanvas) return;
   const ctx = particlesCanvas.getContext('2d');
   if (!ctx) return;
@@ -242,7 +242,7 @@ function speakReply(text) {
   try {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = selectedLang || 'en-IN';
+    utterance.lang = selectedLang || 'en-US';
     utterance.rate = 1.04;
     window.speechSynthesis.speak(utterance);
   } catch {
@@ -275,7 +275,7 @@ function runCommand(text) {
       if (chrome.runtime.lastError) {
         playErrorSound();
         statusEl.textContent = 'Extension worker error';
-        addChatBubble('DOPE', chrome.runtime.lastError.message, 'error');
+        addChatBubble('El Dorado', chrome.runtime.lastError.message, 'error');
         return;
       }
 
@@ -288,7 +288,7 @@ function runCommand(text) {
         statusEl.textContent = 'Notice';
       }
       subEl.textContent = reply;
-      addChatBubble('DOPE', reply, res?.action?.action ? res.action.action.replace(/_/g, ' ') : '');
+      addChatBubble('El Dorado', reply, res?.action?.action ? res.action.action.replace(/_/g, ' ') : '');
       speakReply(reply);
 
       if (res?.action?.action === 'stop_listening') {
@@ -312,8 +312,8 @@ function stopListening() {
   micBtn.classList.remove('listening', 'executing');
   setWaveActive(false);
   wakeBtn.classList.remove('active');
-  wakeBtn.textContent = 'Hey Dop Mode';
-  statusEl.textContent = 'Hey Dop is ready';
+  wakeBtn.textContent = 'Hey El Dorado Mode';
+  statusEl.textContent = 'El Dorado is ready';
   subEl.textContent = 'Press Alt + D + T or tap the orb to speak.';
 }
 
@@ -338,23 +338,23 @@ function startListening(useWakeWord) {
   recognition = new SpeechCtor();
   recognition.continuous = useWakeWord;
   recognition.interimResults = false;
-  recognition.lang = selectedLang || 'en-IN';
+  recognition.lang = selectedLang || 'en-US';
 
   micBtn.classList.add('listening');
   setWaveActive(true);
   wakeBtn.classList.toggle('active', useWakeWord);
-  wakeBtn.textContent = useWakeWord ? 'Stop "Hey Dop"' : 'Hey Dop Mode';
-  statusEl.textContent = useWakeWord ? 'Waiting for "Hey Dop"...' : 'Listening... Speak now';
+  wakeBtn.textContent = useWakeWord ? 'Stop "Hey El Dorado"' : 'Hey El Dorado Mode';
+  statusEl.textContent = useWakeWord ? 'Waiting for "Hey El Dorado"...' : 'Listening... Speak now';
   subEl.textContent = useWakeWord
-    ? 'Say "Hey Dop, open YouTube" or "Hey Dop, scroll down"'
-    : 'Listening for English, Hindi, or Hinglish command';
+    ? 'Say "Hey El Dorado, open YouTube" or "Hey El Dorado, scroll down"'
+    : 'Listening for your voice command or question';
 
   recognition.onresult = (event) => {
     const last = event.results[event.results.length - 1];
     const transcript = (last?.[0]?.transcript || '').trim();
     if (!transcript) return;
     if (wakeMode) {
-      if (/^\s*(?:hey|hi|ok|okay|hello)\s+(?:dop|dope|daap)\b/i.test(transcript)) {
+      if (/^\s*(?:hey|hi|ok|okay|hello)\s+(?:el\s*dorado|eldorado|el-dorado|dop|dope|daap)\b/i.test(transcript)) {
         runCommand(transcript);
       }
     } else {
@@ -396,7 +396,7 @@ function startListening(useWakeWord) {
       isListening = false;
       micBtn.classList.remove('listening');
       setWaveActive(false);
-      statusEl.textContent = 'Hey Dop is ready';
+      statusEl.textContent = 'El Dorado is ready';
     }
   };
 
@@ -478,7 +478,7 @@ saveServerBtn.addEventListener('click', () => {
     () => {
       subEl.textContent = currentServerUrl
         ? `Connected backend: ${currentServerUrl}`
-        : 'Using built-in offline Chrome parser.';
+        : 'Using built-in offline El Dorado parser.';
       playSuccessSound();
     }
   );
@@ -513,7 +513,7 @@ try {
   // Ignore
 }
 
-initAntigravityParticles();
+initOrbParticles();
 
 chrome.runtime.sendMessage({ type: 'get_status' }, (res) => {
   if (res) {
@@ -522,7 +522,7 @@ chrome.runtime.sendMessage({ type: 'get_status' }, (res) => {
     soundEnabled = res.soundEnabled !== false;
     soundToggleBtn.classList.toggle('active', soundEnabled);
     soundToggleBtn.textContent = soundEnabled ? 'Sound On' : 'Sound Off';
-    if (res.lang) {
+    if (res.lang && Array.from(langSelect.options).some((opt) => opt.value === res.lang)) {
       selectedLang = res.lang;
       langSelect.value = selectedLang;
     }

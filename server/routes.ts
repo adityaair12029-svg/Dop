@@ -131,8 +131,8 @@ export function registerRoutes(app: Express): void {
           (d) => d.status === 'connected' && d.platform === 'browser_extension'
         ) || body.context?.extension_connected
       ),
-      active_app: body.context?.active_app ?? 'DOPE Web Console',
-      active_window_title: body.context?.active_window_title ?? 'DOPE PDF & Document Testbench',
+      active_app: body.context?.active_app ?? 'El Dorado Web Console',
+      active_window_title: body.context?.active_window_title ?? 'El Dorado PDF & Document Testbench',
       pdf_viewer_type: body.context?.pdf_viewer_type ?? 'browser_pdf_testbench',
       linux_display_server: body.context?.linux_display_server,
     };
@@ -208,7 +208,7 @@ export function registerRoutes(app: Express): void {
       extension_connected: store.devices.some(
         (d) => d.status === 'connected' && d.platform === 'browser_extension'
       ),
-      active_app: 'DOPE Web Console',
+      active_app: 'El Dorado Web Console',
       active_window_title: 'Confirmation Dialog',
     });
 
@@ -230,13 +230,13 @@ export function registerRoutes(app: Express): void {
         res.status(401).json({
           status: 'error',
           spoken_response:
-            'Please sign in with Google first so DOPE has permission to send emails through your Gmail account.',
+            'Please sign in with Google first so El Dorado has permission to send emails through your Gmail account.',
         });
         return;
       }
 
       const to = check.action.parameters?.to;
-      const subject = check.action.parameters?.subject || 'Message via DOPE Assistant';
+      const subject = check.action.parameters?.subject || 'Message via El Dorado Assistant';
       const emailBody = check.action.parameters?.body || '';
       if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
         res.status(400).json({
@@ -488,7 +488,7 @@ export function registerRoutes(app: Express): void {
     if (fs.existsSync(rootReadme)) {
       entries.push({
         name: 'README.md',
-        title: 'README — DOPE Overview',
+        title: 'README — El Dorado Overview',
         content: fs.readFileSync(rootReadme, 'utf-8'),
       });
     }
@@ -550,7 +550,7 @@ export function registerRoutes(app: Express): void {
     res.setHeader('Content-Length', String(zip.length));
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', 'no-store');
-    res.setHeader('Content-Disposition', 'attachment; filename="DOPE-Chrome-Extension.zip"');
+    res.setHeader('Content-Disposition', 'attachment; filename="El-Dorado-Chrome-Extension.zip"');
     res.send(zip);
   });
 
@@ -567,7 +567,7 @@ export function registerRoutes(app: Express): void {
     res.setHeader('Content-Length', String(zip.length));
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', 'no-store');
-    res.setHeader('Content-Disposition', 'attachment; filename="DOPE-Desktop-Assistant.zip"');
+    res.setHeader('Content-Disposition', 'attachment; filename="El-Dorado-Desktop-Assistant.zip"');
     res.send(zip);
   });
 

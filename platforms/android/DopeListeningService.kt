@@ -11,7 +11,7 @@ import android.os.Build
 import android.os.IBinder
 
 /**
- * Foreground microphone service for optional "Hey Dop" wake-word mode.
+ * Foreground microphone service for optional "Hey El Dorado" wake-word mode.
  * Always displays a persistent, transparent system notification whenever the microphone is active.
  */
 class DopeListeningService : Service() {
@@ -41,7 +41,7 @@ class DopeListeningService : Service() {
         )
 
         val notification = Notification.Builder(this, CHANNEL_ID)
-            .setContentTitle("DOPE is listening for \"Hey Dop\"")
+            .setContentTitle("El Dorado is listening for \"Hey El Dorado\"")
             .setContentText("Audio stays on-device until wake phrase triggers.")
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .addAction(
@@ -70,7 +70,7 @@ class DopeListeningService : Service() {
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "DOPE Microphone Status",
+            "El Dorado Microphone Status",
             NotificationManager.IMPORTANCE_LOW
         )
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)

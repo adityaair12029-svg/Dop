@@ -18,9 +18,10 @@ export interface OfflineParseResult {
 }
 
 const WAKE_PATTERNS: RegExp[] = [
+  /^\s*(?:hey|hi|ok|okay|hello)\s+(?:el\s*dorado|eldorado|el-dorado)\b[\s,.:!?-]*(.*)$/i,
+  /^\s*(?:el\s*dorado|eldorado)\b[\s,.:!?-]+(.*)$/i,
   /^\s*(?:hey|hi|ok|okay|hello)\s+(?:dop|dope|daap|top)\b[\s,.:!?-]*(.*)$/i,
   /^\s*(?:dop|dope)\b[\s,.:!?-]+(.*)$/i,
-  /^\s*(?:हे|हाय|हेलो|अरे)\s+(?:डॉप|डोप|दोप)\b[\s,।.:!?-]*(.*)$/i,
 ];
 
 export function detectWakeWord(transcript: string): WakeWordResult {
@@ -32,7 +33,7 @@ export function detectWakeWord(transcript: string): WakeWordResult {
       const matchedPrefix = cleaned.slice(0, cleaned.length - remainder.length).trim();
       return {
         detected: true,
-        wake_phrase_matched: matchedPrefix || 'Hey Dop',
+        wake_phrase_matched: matchedPrefix || 'Hey El Dorado',
         command_text: remainder,
       };
     }
@@ -113,7 +114,7 @@ export function parseOfflineCommand(
       matched: false,
       ambiguous: true,
       supported: true,
-      clarification_question: 'I heard "Hey Dop", what would you like me to do?',
+      clarification_question: 'I heard "Hey El Dorado", what would you like me to do?',
       spoken_response: 'Yes, I am listening. What would you like me to do?',
     };
   }
@@ -670,7 +671,7 @@ export function parseOfflineCommand(
       matched: true,
       supported: true,
       action: { action: 'answer_question', platform: context.platform, requires_confirmation: false },
-      spoken_response: `Abhi time ${now} hai.`,
+      spoken_response: `The current time is ${now}.`,
     };
   }
   if (/(?:what(?:'s| is) the date|today'?s date|aaj ki date|aaj kya tarikh)/i.test(lower)) {
@@ -679,16 +680,16 @@ export function parseOfflineCommand(
       matched: true,
       supported: true,
       action: { action: 'answer_question', platform: context.platform, requires_confirmation: false },
-      spoken_response: `Aaj ${today} hai.`,
+      spoken_response: `Today is ${today}.`,
     };
   }
-  if (/(?:who are you|tum kaun ho|what is dope|apne baare me batao)/i.test(lower)) {
+  if (/(?:who are you|what is el dorado|what is dope|tell me about yourself)/i.test(lower)) {
     return {
       matched: true,
       supported: true,
       action: { action: 'answer_question', platform: context.platform, requires_confirmation: false },
       spoken_response:
-        'Main DOPE hoon — aapka AI voice assistant. Aap mujhse koi bhi sawal pooch sakte ho ya browser/desktop commands de sakte ho.',
+        'I am El Dorado, your AI voice assistant. Ask me any question or speak a browser and desktop command.',
     };
   }
 

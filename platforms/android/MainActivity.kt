@@ -38,7 +38,7 @@ fun DopeAndroidHome() {
         )
     }
     var foregroundListening by remember { mutableStateOf(false) }
-    var statusText by remember { mutableStateOf("Tap Activate or enable Hey Dop foreground mode.") }
+    var statusText by remember { mutableStateOf("Tap Activate or enable Hey El Dorado foreground mode.") }
 
     val micLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -55,7 +55,7 @@ fun DopeAndroidHome() {
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("DOPE Assistant", style = MaterialTheme.typography.headlineMedium)
+            Text("El Dorado Assistant", style = MaterialTheme.typography.headlineMedium)
             Text(statusText, style = MaterialTheme.typography.bodyMedium)
 
             if (!micGranted) {
@@ -68,13 +68,13 @@ fun DopeAndroidHome() {
                     val intent = Intent(context, DopeListeningService::class.java)
                     if (foregroundListening) {
                         context.startForegroundService(intent)
-                        statusText = "Listening for 'Hey Dop' with active microphone notification."
+                        statusText = "Listening for 'Hey El Dorado' with active microphone notification."
                     } else {
                         context.stopService(intent)
                         statusText = "Foreground listening stopped."
                     }
                 }) {
-                    Text(if (foregroundListening) "Stop Listening" else "Enable Hey Dop Mode")
+                    Text(if (foregroundListening) "Stop Listening" else "Enable Hey El Dorado Mode")
                 }
 
                 OutlinedButton(onClick = {

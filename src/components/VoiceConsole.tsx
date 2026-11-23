@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
+  Check,
+  Copy,
   Download,
   ExternalLink,
   FileText,
@@ -97,25 +99,25 @@ interface VoiceConsoleProps {
 const STARTER_ACTIONS = [
   {
     label: 'Open YouTube or any website',
-    cmd: 'Hey Dop, open YouTube.',
+    cmd: 'Hey El Dorado, open YouTube.',
     icon: Globe,
   },
   {
     label: 'Ask any AI or math question',
-    cmd: 'Hey Dop, what is 25 * 48?',
+    cmd: 'Hey El Dorado, what is 25 * 48?',
     icon: Sparkles,
   },
   {
     label: 'Jump to page 15 in PDF viewer',
-    cmd: 'Hey Dop, go to page 15.',
+    cmd: 'Hey El Dorado, go to page 15.',
     icon: FileText,
   },
 ];
 
 const QUICK_CHIPS = [
-  'Hey Dop, who invented Python?',
-  'Hey Dop, scroll down.',
-  'Hey Dop, YouTube chalao',
+  'Hey El Dorado, who invented Python?',
+  'Hey El Dorado, scroll down.',
+  'Hey El Dorado, open YouTube.',
 ];
 
 export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
@@ -150,7 +152,12 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [composerPulse, setComposerPulse] = useState(false);
   const [downloadBusy, setDownloadBusy] = useState<'extension' | 'desktop' | null>(null);
-  const [downloadNote, setDownloadNote] = useState<{ ok: boolean; text: string } | null>(null);
+  const [downloadNote, setDownloadNote] = useState<{
+    ok: boolean;
+    kind: 'extension' | 'desktop';
+    text: string;
+  } | null>(null);
+  const [copiedExtensionsUrl, setCopiedExtensionsUrl] = useState(false);
   const [lastResult, setLastResult] = useState<{
     spoken_response: string;
     action: DopeAction;
@@ -177,7 +184,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const rafRef = useRef<number | null>(null);
 
-  const firstName = userName.trim().split(/\s+/)[0] || 'Doptails';
+  const firstName = userName.trim().split(/\s+/)[0] || 'Explorer';
 
   const stopAudioCapture = () => {
     if (rafRef.current !== null) {
@@ -400,7 +407,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
     setMicPermissionError(null);
     if (!navigator.mediaDevices?.getUserMedia) {
       setMicPermissionError(
-        'This browser environment does not expose microphone capture (navigator.mediaDevices). Use the command bar below or run DOPE over HTTPS/localhost.'
+        'This browser environment does not expose microphone capture (navigator.mediaDevices). Use the command bar below or run El Dorado over HTTPS/localhost.'
       );
       return;
     }
@@ -511,11 +518,11 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
 
   return (
     <div className="space-y-6 ag-animate-in">
-      {/* Top Antigravity Workspace Strip */}
+      {/* Top El Dorado Workspace Strip */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-black/10 dark:border-white/[0.08] pb-4">
         <div className="text-xs text-[#5F6368] dark:text-neutral-400 flex items-center gap-2">
           <span className="font-medium text-[#0A0A0C] dark:text-white">Wake phrase:</span>
-          <span>Hey Dop</span>
+          <span>Hey El Dorado</span>
           <span aria-hidden="true">·</span>
           <span>Shortcut:</span>
           <kbd className="font-mono text-[11px] px-1.5 py-0.5 rounded border border-black/10 dark:border-white/15 bg-[#F7F8FA] dark:bg-[#141418] text-[#0A0A0C] dark:text-white">
@@ -532,10 +539,8 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
               onChange={(e) => onChangeLanguage(e.target.value as 'auto' | 'en' | 'hi' | 'hinglish')}
               className="rounded-full border border-black/10 dark:border-white/15 bg-[#F7F8FA] dark:bg-[#0D0D10] px-3 py-1.5 text-xs text-[#0A0A0C] dark:text-white focus:outline-none focus:border-[#2F71E3]"
             >
-              <option value="auto">Auto (EN / HI / Hinglish)</option>
-              <option value="en">English</option>
-              <option value="hi">Hindi</option>
-              <option value="hinglish">Hinglish</option>
+              <option value="auto">Auto Detect</option>
+              <option value="en">English (US)</option>
             </select>
           </label>
 
@@ -595,9 +600,9 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
         </div>
       </div>
 
-      {/* Main 2-Column Antigravity Workspace */}
+      {/* Main 2-Column El Dorado Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left 7 Cols: Antigravity Particle Hero Stage + Composer + Result + History */}
+        {/* Left 7 Cols: Particle Hero Stage + Composer + Result + History */}
         <div className="lg:col-span-7 space-y-6">
           <section className="relative overflow-hidden rounded-2xl border border-black/10 dark:border-white/[0.08] bg-white dark:bg-[#070708] px-5 sm:px-8 py-8">
             <AntigravityParticles
@@ -615,7 +620,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                 Good to see you, {firstName}. What&apos;s next?
               </h1>
 
-              {/* 3 Antigravity Starter Actions */}
+              {/* 3 Starter Actions */}
               <div className="mt-5 w-full max-w-md space-y-1">
                 {STARTER_ACTIONS.map((item) => {
                   const Icon = item.icon;
@@ -633,7 +638,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                 })}
               </div>
 
-              {/* Antigravity Sleek Rounded Composer Box */}
+              {/* Sleek Rounded Composer Box */}
               <div
                 className={`mt-6 w-full rounded-2xl border bg-[#F7F8FA]/95 dark:bg-[#0D0D10]/95 backdrop-blur-md p-4 shadow-sm transition-all duration-200 ${
                   composerPulse || isListening || isSubmitting
@@ -645,11 +650,11 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                   <div className="text-xs font-medium text-[#5F6368] dark:text-neutral-400">
                     {isListening
                       ? wakeWordMode && !sessionActive
-                        ? 'Waiting for "Hey Dop"...'
+                        ? 'Waiting for "Hey El Dorado"...'
                         : 'Listening for command...'
                       : sessionActive
                         ? 'Follow-up active — speak or type naturally'
-                        : 'Ask anything, say "Hey Dop", or press Alt+D+T'}
+                        : 'Ask anything, say "Hey El Dorado", or press Alt+D+T'}
                   </div>
                   <button
                     type="button"
@@ -662,7 +667,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                         : 'border-black/10 dark:border-white/12 text-[#5F6368] dark:text-neutral-300 hover:text-[#0A0A0C] dark:hover:text-white'
                     }`}
                   >
-                    {isListening && wakeWordMode ? 'Stop "Hey Dop"' : 'Enable "Hey Dop" Mode'}
+                    {isListening && wakeWordMode ? 'Stop "Hey El Dorado"' : 'Enable "Hey El Dorado" Mode'}
                   </button>
                 </div>
 
@@ -693,7 +698,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
 
                 <form onSubmit={handleFormSubmit} className="space-y-3">
                   <label htmlFor="dope-command-input" className="sr-only">
-                    Type or speak a DOPE command
+                    Type or speak an El Dorado command
                   </label>
                   <input
                     id="dope-command-input"
@@ -704,7 +709,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                       setComposerPulse(true);
                       window.setTimeout(() => setComposerPulse(false), 320);
                     }}
-                    placeholder='Ask anything ("25 * 48", "Who invented Python?") or say "YouTube kholo"'
+                    placeholder='Ask anything ("25 * 48", "Who invented Python?") or say "Hey El Dorado, open YouTube"'
                     className="w-full bg-transparent text-sm text-[#0A0A0C] dark:text-white placeholder:text-[#5F6368] dark:placeholder:text-neutral-500 focus:outline-none"
                   />
 
@@ -717,7 +722,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                           onClick={() => void executeCommand(phrase)}
                           className="px-2.5 py-1 text-[11px] rounded-full border border-black/10 dark:border-white/10 text-[#5F6368] dark:text-neutral-400 hover:border-[#2F71E3] hover:text-[#0A0A0C] dark:hover:text-white transition-colors whitespace-nowrap shrink-0 cursor-pointer"
                         >
-                          {phrase.replace(/^Hey Dop,\s*/i, '')}
+                          {phrase.replace(/^Hey El Dorado,\s*/i, '')}
                         </button>
                       ))}
                     </div>
@@ -767,7 +772,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
 
             {!lastResult ? (
               <p className="mt-3 text-sm text-[#5F6368] dark:text-neutral-400">
-                Issue a voice or text command above to see DOPE&apos;s spoken response, validated action
+                Issue a voice or text command above to see El Dorado&apos;s spoken response, validated action
                 schema, and honest execution feedback.
               </p>
             ) : (
@@ -775,7 +780,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                 {lastResult.action.action === 'answer_question' && (
                   <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#2F75C3] dark:text-[#60A5FA]">
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>DOPE AI Answer</span>
+                    <span>El Dorado AI Answer</span>
                   </div>
                 )}
                 <p className="text-sm text-[#0A0A0C] dark:text-white font-medium leading-relaxed">
@@ -809,7 +814,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                         <span>Open {lastResult.action.target}</span>
                       </a>
                       <p className="text-[11px] text-[#5F6368] dark:text-neutral-400">
-                        Install the DOPE Chrome Extension (.zip) to auto-open tabs, switch tabs, scroll, and minimize Chrome windows directly.
+                        Install the El Dorado Chrome Extension (.zip) to auto-open tabs, switch tabs, scroll, and control Chrome windows directly.
                       </p>
                     </div>
                   )}
@@ -863,7 +868,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
               <div className="flex items-center gap-2 min-w-0">
                 <Puzzle className="w-4 h-4 text-[#2F75C3] dark:text-[#2F71E3] shrink-0" />
                 <h2 className="text-sm font-semibold text-[#0A0A0C] dark:text-white truncate">
-                  Chrome Extension &amp; Desktop Bundle
+                  El Dorado Extension &amp; Desktop Bundle
                 </h2>
               </div>
               {onOpenExtensionStudio && (
@@ -877,11 +882,11 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
               )}
             </div>
             <p className="mt-3 text-xs text-[#5F6368] dark:text-neutral-400 leading-relaxed">
-              Antigravity-themed Chrome Extension v1.4 with radial particle animation, sweet chimes, and AI Q&amp;A. Press{' '}
+              Chrome &amp; Edge Extension v1.5 with floating voice orb, harmonic chimes, and AI Q&amp;A. Press{' '}
               <kbd className="font-mono px-1.5 py-0.5 rounded border border-black/10 dark:border-white/15 text-[#0A0A0C] dark:text-white">
                 Alt+D+T
               </kbd>{' '}
-              anywhere in Chrome or Windows Home Screen (<code className="font-mono">python dope_companion.py</code>).
+              or say <strong className="text-[#0A0A0C] dark:text-white">&ldquo;Hey El Dorado&rdquo;</strong> on any Chrome tab or Desktop Home Screen (<code className="font-mono">python el_dorado_companion.py</code>).
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <button
@@ -894,11 +899,13 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                     const info = await downloadVerifiedZip({ kind: 'extension' });
                     setDownloadNote({
                       ok: true,
-                      text: `Downloaded ${info.filename} (${Math.round(info.byteLength / 1024)} KB). Extract All -> chrome://extensions -> Load unpacked.`,
+                      kind: 'extension',
+                      text: `Downloaded ${info.filename} (${Math.round(info.byteLength / 1024)} KB). Follow the 3 instant steps below to activate in Chrome.`,
                     });
                   } catch (err) {
                     setDownloadNote({
                       ok: false,
+                      kind: 'extension',
                       text: err instanceof Error ? err.message : 'Extension download failed.',
                     });
                   } finally {
@@ -908,7 +915,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-full bg-[#2F75C3] dark:bg-[#2F71E3] text-white hover:opacity-90 disabled:opacity-60 transition-opacity whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>{downloadBusy === 'extension' ? 'Downloading...' : 'Chrome Extension (.zip)'}</span>
+                <span>{downloadBusy === 'extension' ? 'Downloading...' : 'El Dorado Extension (.zip)'}</span>
               </button>
               <button
                 type="button"
@@ -920,11 +927,13 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                     const info = await downloadVerifiedZip({ kind: 'desktop' });
                     setDownloadNote({
                       ok: true,
-                      text: `Downloaded ${info.filename} (${Math.round(info.byteLength / 1024)} KB). Extract All -> Load unpacked in chrome://extensions AND run python dope_companion.py for Desktop Home Screen.`,
+                      kind: 'desktop',
+                      text: `Downloaded ${info.filename} (${Math.round(info.byteLength / 1024)} KB). Extract All -> Load unpacked in chrome://extensions AND run python el_dorado_companion.py for Desktop Home Screen.`,
                     });
                   } catch (err) {
                     setDownloadNote({
                       ok: false,
+                      kind: 'desktop',
                       text: err instanceof Error ? err.message : 'Desktop download failed.',
                     });
                   } finally {
@@ -949,13 +958,40 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
             {downloadNote && (
               <div
                 role="status"
-                className={`mt-3 rounded-xl border px-3 py-2 text-[11px] ${
+                className={`mt-3 rounded-xl border px-3.5 py-2.5 text-[11px] space-y-2 ${
                   downloadNote.ok
                     ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
                     : 'border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300'
                 }`}
               >
-                {downloadNote.text}
+                <div className="font-medium">{downloadNote.text}</div>
+                {downloadNote.ok && (
+                  <div className="pt-2 border-t border-emerald-500/20 space-y-1.5 text-[#0A0A0C] dark:text-neutral-200">
+                    <div>1. Right-click the ZIP &rarr; <strong>Extract All</strong> into a folder.</div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span>2. Open <code className="font-mono">chrome://extensions</code> &amp; enable Developer mode:</span>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText('chrome://extensions');
+                            setCopiedExtensionsUrl(true);
+                            setTimeout(() => setCopiedExtensionsUrl(false), 1800);
+                          } catch {
+                            // Ignore clipboard restriction
+                          }
+                        }}
+                        className="inline-flex items-center gap-1 rounded-full border border-black/15 dark:border-white/20 bg-white dark:bg-[#070708] px-2.5 py-0.5 text-[10.5px] font-medium cursor-pointer"
+                      >
+                        {copiedExtensionsUrl ? <Check className="w-3 h-3 text-[#2F71E3]" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedExtensionsUrl ? 'Copied chrome://extensions' : 'Copy chrome://extensions'}</span>
+                      </button>
+                    </div>
+                    <div>
+                      3. Click <strong>Load unpacked</strong> and select the extracted folder{downloadNote.kind === 'desktop' ? ' (then run python el_dorado_companion.py for desktop-wide hotkeys).' : '.'}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </section>
@@ -1014,7 +1050,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
 
             {pdfMinimized ? (
               <div className="mt-3 p-4 rounded-xl border border-dashed border-black/15 dark:border-white/15 text-center text-xs text-[#5F6368] dark:text-neutral-400">
-                PDF window minimized. Say &ldquo;Hey Dop, restore this PDF window&rdquo; or click restore.
+                PDF window minimized. Say &ldquo;Hey El Dorado, restore this PDF window&rdquo; or click restore.
               </div>
             ) : (
               <div
@@ -1027,11 +1063,11 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                   className="space-y-3 text-xs leading-relaxed text-[#5F6368] dark:text-neutral-300"
                 >
                   <div className="font-semibold text-sm text-[#0A0A0C] dark:text-white">
-                    DOPE Architecture Specification — Page {pdfPage}
+                    El Dorado Architecture Specification — Page {pdfPage}
                   </div>
                   <p>
-                    Try voice or text commands like &ldquo;Hey Dop, scroll down&rdquo;, &ldquo;Hey Dop,
-                    zoom in&rdquo;, &ldquo;Hey Dop, go to page 15&rdquo;, &ldquo;Hey Dop, fit page to
+                    Try voice or text commands like &ldquo;Hey El Dorado, scroll down&rdquo;, &ldquo;Hey El Dorado,
+                    zoom in&rdquo;, &ldquo;Hey El Dorado, go to page 15&rdquo;, &ldquo;Hey El Dorado, fit page to
                     width&rdquo;, or switch the dropdown above to Unsupported PDF to verify honest capability checks.
                   </p>
                   <p>
@@ -1042,7 +1078,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                   <p>
                     Section {pdfPage}.2 — Cross-Platform PDF Adapters: Adobe Acrobat, Microsoft Edge PDF,
                     Chrome PDF, macOS Preview, and Linux Evince expose different keyboard and UIA hooks.
-                    DOPE inspects the active foreground viewer before dispatching controls.
+                    El Dorado inspects the active foreground viewer before dispatching controls.
                   </p>
                   <p>
                     Section {pdfPage}.3 — End of simulated page {pdfPage} content block for scroll
@@ -1077,7 +1113,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
             {!hasGmailToken ? (
               <div className="mt-4 space-y-3">
                 <p className="text-xs text-[#5F6368] dark:text-neutral-400">
-                  Connect your Google account with permission to let DOPE read inbox summaries by voice
+                  Connect your Google account with permission to let El Dorado read inbox summaries by voice
                   and send emails (always requiring explicit confirmation).
                 </p>
                 <button
@@ -1093,7 +1129,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
             ) : gmailMessages.length === 0 ? (
               <div className="mt-3 space-y-2">
                 <p className="text-xs text-[#5F6368] dark:text-neutral-400">
-                  Gmail connected. Click Refresh Inbox or say &ldquo;Hey Dop, check my unread emails.&rdquo;
+                  Gmail connected. Click Refresh Inbox or say &ldquo;Hey El Dorado, check my unread emails.&rdquo;
                 </p>
               </div>
             ) : (

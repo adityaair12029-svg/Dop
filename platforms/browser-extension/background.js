@@ -76,7 +76,7 @@ function isSafeHttpUrl(raw) {
 function normalizeHinglish(raw) {
   let text = String(raw || '')
     .trim()
-    .replace(/^\s*(?:hey|hi|ok|okay|hello)\s+(?:dop|dope|daap|top)\b[\s,.:!?-]*/i, '')
+    .replace(/^\s*(?:hey|hi|ok|okay|hello)\s+(?:el\s*dorado|eldorado|el-dorado|dop|dope|daap|top)\b[\s,.:!?-]*/i, '')
     .replace(/^\s*(?:हे|हाय|हेलो)\s+(?:डॉप|डोप|दोप)\b[\s,।.:!?-]*/i, '')
     .replace(/\s+/g, ' ')
     .replace(/खोलो|चलाओ|ओपन करो|चालू करो/gi, 'kholo')
@@ -437,14 +437,14 @@ async function localAnswerQuestionFallback(cleanText) {
 
   if (/(?:what(?:'s| is) the time|current time|time kya|kitna baja|kitne baje)/i.test(lower)) {
     const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return `Abhi time ${now} hai.`;
+    return `The current time is ${now}.`;
   }
   if (/(?:what(?:'s| is) the date|today'?s date|aaj ki date|aaj kya tarikh)/i.test(lower)) {
     const today = new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    return `Aaj ${today} hai.`;
+    return `Today is ${today}.`;
   }
-  if (/(?:who are you|tum kaun ho|what is dope)/i.test(lower)) {
-    return 'Main DOPE hoon, aapka AI voice assistant. Aap mujhse koi bhi sawal pooch sakte ho ya browser commands de sakte ho.';
+  if (/(?:who are you|tum kaun ho|what is (?:el\s*dorado|eldorado|dope))/i.test(lower)) {
+    return 'I am El Dorado, your AI voice assistant. Ask me any question or speak any browser command.';
   }
 
   // Wikipedia summary lookup for factual Q&A even offline from backend
@@ -693,7 +693,8 @@ async function handleVoiceOrTextCommand(text, serverUrl) {
             },
           }),
         });
-        if (res.ok) {
+        const contentType = (res.headers.get('content-type') || '').toLowerCase();
+        if (res.ok && contentType.includes('application/json')) {
           interpreted = await res.json();
           source = interpreted.ai_source || 'server';
         }
@@ -710,7 +711,7 @@ async function handleVoiceOrTextCommand(text, serverUrl) {
         action: { action: 'answer_question', platform: 'browser_extension', requires_confirmation: false },
         spoken_response:
           localAnswer ||
-          'Backend Gemini server se connect karke full AI answers paayein, ya direct command bolein.',
+          'Connect an El Dorado AI backend URL in Settings for full Gemini answers, or speak any browser command.',
       };
     } else {
       interpreted = localParsed;
@@ -724,7 +725,7 @@ async function handleVoiceOrTextCommand(text, serverUrl) {
       source,
       spoken_response:
         interpreted.spoken_response ||
-        `Action "${action?.action ?? 'unknown'}" requires the DOPE Desktop Companion.`,
+        `Action "${action?.action ?? 'unknown'}" requires the El Dorado Desktop Companion.`,
       action,
     };
   }
@@ -767,7 +768,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           serverUrl: stored.dopeServerUrl || DEFAULT_SERVER_URL,
           autoListen: pending,
           soundEnabled: stored.dopeSoundEnabled !== false,
-          lang: stored.dopeLang || 'en-IN',
+          lang: stored.dopeLang || 'en-US',
         });
       }
     );

@@ -1,11 +1,10 @@
 """
-DOPE Whole-Laptop Desktop Assistant (Windows / macOS / Linux).
+El Dorado Whole-Laptop Desktop Assistant (Windows / macOS / Linux).
 Self-installs required Python packages on first launch, then runs globally across
 your Windows Desktop Home Screen, File Explorer, VS Code, and all apps:
 - Press Alt + D + T anywhere (even when Chrome is closed or minimized)
-- Plays sweet harmonic bell chimes (activate, executing, success, error)
-- Captures laptop microphone speech (EN-IN / Hindi / Hinglish / English)
-- Answers any AI question via DOPE Gemini AI backend and speaks replies aloud
+- Plays harmonic bell chimes (activate, executing, success, error)
+- Captures laptop microphone speech and answers any AI question aloud
 - Executes allowlisted OS actions (launch apps, open URLs, minimize/switch windows, volume, PDF)
 """
 
@@ -64,12 +63,12 @@ def bootstrap_dependencies() -> None:
             missing.append(pkg_spec)
 
     if missing:
-        print("[DOPE] First-time setup: installing required desktop packages...")
+        print("[El Dorado] First-time setup: installing required desktop packages...")
         try:
             subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", *missing])
-            print("[DOPE] Core packages installed.")
+            print("[El Dorado] Core packages installed.")
         except Exception as exc:
-            print(f"[DOPE Warning] Auto-install had an issue ({exc}). Continuing with available modules...")
+            print(f"[El Dorado Warning] Auto-install had an issue ({exc}). Continuing with available modules...")
 
     if sys.platform == "win32":
         try:
@@ -95,11 +94,11 @@ from adapters.linux_adapter import LinuxAdapter  # noqa: E402
 from adapters.pdf_adapter import PdfViewerAdapter  # noqa: E402
 
 _SESSION_LOCK = threading.Lock()
-_CHIME_DIR = Path(tempfile.gettempdir()) / "dope_chimes"
+_CHIME_DIR = Path(tempfile.gettempdir()) / "el_dorado_chimes"
 
 
 def resolve_server_url() -> str:
-    env_url = os.environ.get("DOPE_SERVER_URL", "").strip()
+    env_url = os.environ.get("EL_DORADO_SERVER_URL", "").strip() or os.environ.get("DOPE_SERVER_URL", "").strip()
     if env_url.startswith(("http://", "https://")):
         return env_url.rstrip("/")
     if DEFAULT_SERVER_URL.startswith(("http://", "https://")):
@@ -175,7 +174,7 @@ def ensure_chime_files() -> dict[str, Path]:
     }
     paths: dict[str, Path] = {}
     for name, notes in specs.items():
-        target = _CHIME_DIR / f"dope_{name}.wav"
+        target = _CHIME_DIR / f"eldorado_{name}.wav"
         try:
             _write_harmonic_chime_wav(target, notes)
             paths[name] = target
@@ -252,44 +251,91 @@ def listen_microphone_once() -> str | None:
     try:
         import speech_recognition as sr
     except ImportError:
-        print("[DOPE] SpeechRecognition not installed; type your question/command in this window.")
+        print("[El Dorado] SpeechRecognition not installed; type your question/command in this window.")
         return None
 
     recognizer = sr.Recognizer()
     try:
         with sr.Microphone() as source:
-            print("[DOPE] Listening on laptop microphone (English / Hindi / Hinglish)...")
+            print("[El Dorado] Listening on laptop microphone...")
             recognizer.adjust_for_ambient_noise(source, duration=0.35)
             audio = recognizer.listen(source, timeout=6, phrase_time_limit=12)
-        text = recognizer.recognize_google(audio, language="en-IN")
+        text = recognizer.recognize_google(audio, language="en-US")
         return text.strip()
     except sr.WaitTimeoutError:
-        print("[DOPE] No speech detected before timeout.")
+        print("[El Dorado] No speech detected before timeout.")
         return None
     except sr.UnknownValueError:
-        print("[DOPE] Could not understand speech clearly. Try again.")
+        print("[El Dorado] Could not understand speech clearly. Try again.")
         return None
     except Exception as exc:
-        print(f"[DOPE] Microphone unavailable ({exc}). Type your command or question directly here.")
+        print(f"[El Dorado] Microphone unavailable ({exc}). Type your command or question directly here.")
         return None
 
 
-def send_command_to_dope_server(server_url: str, utterance: str, active_title: str) -> dict[str, Any]:
-    resp = requests.post(
-        f"{server_url.rstrip('/')}/api/dope/command",
-        json={
-            "text": utterance,
-            "language": "auto",
-            "context": {
-                "platform": "windows" if sys.platform == "win32" else ("macos" if sys.platform == "darwin" else "linux"),
-                "companion_connected": True,
-                "active_window_title": active_title,
+def local_offline_interpret(utterance: str) -> dict[str, Any]:
+    """Built-in desktop fallback when backend API is unreachable (e.g. static hosting)."""
+    import re
+    clean = re.sub(r"^\s*(?:hey|hi|ok|okay|hello)\s+(?:el\s*dorado|eldorado|el-dorado)\b[\s,.:!?-]*", "", utterance.strip(), flags=re.I)
+    lower = clean.lower().strip()
+    plat = "windows" if sys.platform == "win32" else ("macos" if sys.platform == "darwin" else "linux")
+
+    sites = {
+        "youtube": "https://www.youtube.com",
+        "google": "https://www.google.com",
+        "gmail": "https://mail.google.com",
+        "github": "https://github.com",
+        "wikipedia": "https://www.wikipedia.org",
+    }
+    if "minimize" in lower:
+        return {"supported": True, "action": {"action": "minimize_window", "platform": plat, "requires_confirmation": False}, "spoken_response": "Minimizing window."}
+    if "maximize" in lower:
+        return {"supported": True, "action": {"action": "maximize_window", "platform": plat, "requires_confirmation": False}, "spoken_response": "Maximizing window."}
+    if "restore" in lower:
+        return {"supported": True, "action": {"action": "restore_window", "platform": plat, "requires_confirmation": False}, "spoken_response": "Restoring window."}
+    if "scroll down" in lower:
+        return {"supported": True, "action": {"action": "scroll", "platform": plat, "requires_confirmation": False, "parameters": {"direction": "down"}}, "spoken_response": "Scrolling down."}
+    if "scroll up" in lower:
+        return {"supported": True, "action": {"action": "scroll", "platform": plat, "requires_confirmation": False, "parameters": {"direction": "up"}}, "spoken_response": "Scrolling up."}
+    if "increase volume" in lower or "volume up" in lower:
+        return {"supported": True, "action": {"action": "adjust_volume", "platform": plat, "requires_confirmation": False, "parameters": {"delta": 10}}, "spoken_response": "Increasing volume."}
+    if "decrease volume" in lower or "volume down" in lower:
+        return {"supported": True, "action": {"action": "adjust_volume", "platform": plat, "requires_confirmation": False, "parameters": {"delta": -10}}, "spoken_response": "Decreasing volume."}
+    m_open = re.match(r"^open\s+(.+)$", clean, flags=re.I)
+    if m_open:
+        target = m_open.group(1).strip().rstrip(".!?")
+        key = target.lower().replace(" ", "")
+        if key in sites:
+            return {"supported": True, "action": {"action": "open_url", "target": sites[key], "platform": plat, "requires_confirmation": False}, "spoken_response": f"Opening {target}."}
+        return {"supported": True, "action": {"action": "open_app", "target": target, "platform": plat, "requires_confirmation": False}, "spoken_response": f"Launching {target}."}
+    return {
+        "supported": True,
+        "action": {"action": "web_search", "target": f"https://www.google.com/search?q={requests.utils.quote(clean)}", "platform": plat, "requires_confirmation": False},
+        "spoken_response": f"Searching Google for {clean}.",
+    }
+
+
+def send_command_to_server(server_url: str, utterance: str, active_title: str) -> dict[str, Any]:
+    try:
+        resp = requests.post(
+            f"{server_url.rstrip('/')}/api/dope/command",
+            json={
+                "text": utterance,
+                "language": "en",
+                "context": {
+                    "platform": "windows" if sys.platform == "win32" else ("macos" if sys.platform == "darwin" else "linux"),
+                    "companion_connected": True,
+                    "active_window_title": active_title,
+                },
             },
-        },
-        timeout=20,
-    )
-    resp.raise_for_status()
-    return resp.json()
+            timeout=10,
+        )
+        ctype = resp.headers.get("content-type", "")
+        if resp.ok and "application/json" in ctype.lower():
+            return resp.json()
+    except Exception:
+        pass
+    return local_offline_interpret(utterance)
 
 
 def handle_utterance(
@@ -313,14 +359,7 @@ def handle_utterance(
     except Exception:
         title = ""
 
-    try:
-        interpreted = send_command_to_dope_server(server_url, clean, title)
-    except Exception as exc:
-        play_chime("error")
-        msg = f"Could not reach DOPE server at {server_url}: {exc}"
-        print(f"[DOPE Error]: {msg}")
-        speak_text("Could not reach the DOPE server.")
-        return
+    interpreted = send_command_to_server(server_url, clean, title)
 
     action = interpreted.get("action", {}) or {}
     action_name = action.get("action")
@@ -329,25 +368,25 @@ def handle_utterance(
     if not interpreted.get("supported", True):
         play_chime("error")
         reason = interpreted.get("unsupported_reason") or spoken
-        print(f"[DOPE Notice]: {reason}")
+        print(f"[El Dorado Notice]: {reason}")
         speak_text(reason)
         return
 
     if action.get("requires_confirmation"):
-        print(f"[DOPE Confirm]: {spoken}")
+        print(f"[El Dorado Confirm]: {spoken}")
         speak_text(f"Please confirm: {spoken}")
         if interactive_confirm:
             confirm = input(f"Confirm action ({action_name})? [y/N]: ").strip().lower()
             if confirm != "y":
-                print("[DOPE]: Action cancelled.")
+                print("[El Dorado]: Action cancelled.")
                 return
         else:
-            print("[DOPE]: Skipping confirmation-required action from background hotkey. Run in terminal to confirm.")
+            print("[El Dorado]: Skipping confirmation-required action from background hotkey. Run in terminal to confirm.")
             return
 
     if action_name in ("answer_question", "clarify", "stop_listening", "list_devices"):
         play_chime("success")
-        print(f"[DOPE AI]: {spoken}")
+        print(f"[El Dorado AI]: {spoken}")
         speak_text(spoken)
         return
 
@@ -356,7 +395,7 @@ def handle_utterance(
         if target.startswith(("https://", "http://")):
             webbrowser.open(target)
             play_chime("success")
-            print(f"[DOPE]: {spoken} ({target})")
+            print(f"[El Dorado]: {spoken} ({target})")
             speak_text(spoken)
             return
 
@@ -367,12 +406,12 @@ def handle_utterance(
 
     if res.get("ok"):
         play_chime("success")
-        print(f"[DOPE]: {spoken} | {res.get('message', '')}")
+        print(f"[El Dorado]: {spoken} | {res.get('message', '')}")
         speak_text(spoken)
     else:
         play_chime("error")
         err_msg = res.get("message") or spoken
-        print(f"[DOPE]: {err_msg}")
+        print(f"[El Dorado]: {err_msg}")
         speak_text(err_msg)
 
 
@@ -429,9 +468,10 @@ def main() -> None:
     pdf_adapter = PdfViewerAdapter()
 
     print("=" * 64)
-    print(f"DOPE Whole-Laptop Assistant Active ({sys.platform})")
+    print(f"El Dorado Whole-Laptop Assistant Active ({sys.platform})")
     print(f"Backend AI Server : {server_url}")
     print("Global Hotkey     : Alt + D + T (works on Desktop Home & all apps)")
+    print('Wake Phrase       : "Hey El Dorado"')
     print("=" * 64)
     play_chime("activate")
 
@@ -440,7 +480,7 @@ def main() -> None:
             return
         try:
             play_chime("activate")
-            print("\n[DOPE Hotkey Alt+D+T triggered!]")
+            print("\n[El Dorado Hotkey Alt+D+T triggered!]")
             utterance = listen_microphone_once()
             if utterance:
                 handle_utterance(server_url, adapter, pdf_adapter, utterance, interactive_confirm=False)
@@ -458,14 +498,14 @@ def main() -> None:
     print("\nType any question or command below (or press Alt+D+T anywhere to use mic). Ctrl+C to quit.")
     try:
         while True:
-            utterance = input("DOPE> ").strip()
+            utterance = input("El Dorado> ").strip()
             if not utterance:
                 continue
             if utterance.lower() in ("exit", "quit"):
                 break
             handle_utterance(server_url, adapter, pdf_adapter, utterance, interactive_confirm=True)
     except (KeyboardInterrupt, EOFError):
-        print("\nDOPE Desktop Assistant stopped.")
+        print("\nEl Dorado Desktop Assistant stopped.")
 
 
 if __name__ == "__main__":
