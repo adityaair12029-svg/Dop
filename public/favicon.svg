@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="agFavGrad" x1="8" y1="54" x2="56" y2="10" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2F71E3" />
+      <stop offset="45%" stop-color="#34A853" />
+      <stop offset="72%" stop-color="#FBBC05" />
+      <stop offset="100%" stop-color="#EA4335" />
+    </linearGradient>
+  </defs>
+  <path
+    d="M32 9C35.8 9 39.2 13.6 43.2 24.4L51.8 48.2C53 51.6 50.6 54.8 47 54.4C43.8 54 41.2 50.2 38.6 43.6C36.6 38.6 34.4 36.2 32 36.2C29.6 36.2 27.4 38.6 25.4 43.6C22.8 50.2 20.2 54 17 54.4C13.4 54.8 11 51.6 12.2 48.2L20.8 24.4C24.8 13.6 28.2 9 32 9Z"
+    fill="url(#agFavGrad)"
+  />
+</svg>

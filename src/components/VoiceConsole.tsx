@@ -22,6 +22,7 @@ import {
   VolumeX,
 } from 'lucide-react';
 import type { DopeAction, DopePlatform } from '../shared/actions';
+import { computeAudioVisualizerMetrics } from '../shared/ecosystemSearch';
 import { detectWakeWord } from '../shared/wakeword';
 import {
   createBrowserSpeechRecognition,
@@ -178,8 +179,10 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
   const [pdfReloadCount, setPdfReloadCount] = useState(0);
   const pdfScrollRef = useRef<HTMLDivElement | null>(null);
 
-  // Web Audio FFT Wave Canvas Refs
+  // Web Audio FFT Wave + Frequency Bar Visualizer Refs
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const meterFillRef = useRef<HTMLDivElement | null>(null);
+  const meterLabelRef = useRef<HTMLSpanElement | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -204,10 +207,12 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
     audioCtxRef.current?.close().catch(() => {});
     audioCtxRef.current = null;
     analyserRef.current = null;
+    if (meterFillRef.current) meterFillRef.current.style.width = '0%';
+    if (meterLabelRef.current) meterLabelRef.current.textContent = '0%';
     setIsListening(false);
   };
 
-  // Draw baseline or live FFT waveform cleanly
+  // Draw baseline or live FFT frequency bars + audio waveform cleanly
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -215,6 +220,7 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
     if (!ctx) return;
 
     const accent = theme === 'dark' ? '#2F71E3' : '#2F75C3';
+    const accentGlow = theme === 'dark' ? 'rgba(96, 165, 250, 0.36)' : 'rgba(47, 117, 195, 0.28)';
     const idleColor = theme === 'dark' ? 'rgba(255,255,255,0.16)' : 'rgba(10,10,12,0.14)';
 
     const drawBaseline = () => {
@@ -236,24 +242,56 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
 
     const analyser = analyserRef.current;
     const bufferLen = analyser.frequencyBinCount;
-    const data = new Uint8Array(bufferLen);
+    const timeData = new Uint8Array(bufferLen);
+    const freqData = new Uint8Array(bufferLen);
+    let lastMeterUpdate = 0;
 
-    const render = () => {
-      analyser.getByteTimeDomainData(data);
+    const render = (now: number) => {
+      analyser.getByteTimeDomainData(timeData);
+      analyser.getByteFrequencyData(freqData);
+      const metrics = computeAudioVisualizerMetrics(freqData, 28);
+
       const w = canvas.width;
       const h = canvas.height;
       ctx.clearRect(0, 0, w, h);
+
+      // Background live frequency bars
+      const barCount = metrics.bars.length;
+      const slot = w / barCount;
+      const barW = Math.max(3, slot * 0.54);
+      ctx.fillStyle = accentGlow;
+      for (let b = 0; b < barCount; b++) {
+        const barH = Math.max(3, (metrics.bars[b] / 100) * (h - 4));
+        const bx = b * slot + (slot - barW) / 2;
+        const by = h - barH;
+        ctx.fillRect(bx, by, barW, barH);
+      }
+
+      // Foreground real-time audio waveform
       ctx.strokeStyle = accent;
       ctx.lineWidth = 2;
       ctx.beginPath();
       const slice = w / bufferLen;
       for (let i = 0; i < bufferLen; i++) {
-        const v = data[i] / 128.0;
+        const v = timeData[i] / 128.0;
         const y = (v * h) / 2;
         if (i === 0) ctx.moveTo(0, y);
         else ctx.lineTo(i * slice, y);
       }
       ctx.stroke();
+
+      if (now - lastMeterUpdate > 70) {
+        lastMeterUpdate = now;
+        if (meterFillRef.current) {
+          meterFillRef.current.style.width = `${metrics.levelPercent}%`;
+        }
+        if (meterLabelRef.current) {
+          meterLabelRef.current.textContent = metrics.receivingAudio
+            ? `${metrics.levelPercent}% · Voice detected`
+            : `${metrics.levelPercent}% · Listening`;
+        }
+      }
+
       rafRef.current = requestAnimationFrame(render);
     };
 
@@ -691,15 +729,35 @@ export const VoiceConsole: React.FC<VoiceConsoleProps> = ({
                   </button>
                 </div>
 
-                {/* Voice-Wave Monitor */}
-                <div className="mb-2.5">
+                {/* Voice-Wave & Audio Input Level Visualizer */}
+                <div className="mb-2.5 space-y-1.5" data-testid="audio-input-visualizer">
                   <canvas
                     ref={canvasRef}
                     width={640}
-                    height={36}
-                    aria-label="Voice waveform monitor"
-                    className="w-full h-9 block"
+                    height={44}
+                    aria-label="Voice waveform and frequency visualizer"
+                    className="w-full h-11 block"
                   />
+                  {isListening && (
+                    <div className="flex items-center gap-2.5 text-[11px] text-[#5F6368] dark:text-neutral-300">
+                      <span className="font-medium shrink-0">Input Level</span>
+                      <div
+                        role="meter"
+                        aria-label="Microphone audio input level"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        className="flex-1 h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden"
+                      >
+                        <div
+                          ref={meterFillRef}
+                          className="h-full w-0 rounded-full bg-[#2F75C3] dark:bg-[#2F71E3] transition-[width] duration-75"
+                        />
+                      </div>
+                      <span ref={meterLabelRef} className="font-mono tabular-nums shrink-0">
+                        0% · Listening
+                      </span>
+                    </div>
+                  )}
                   {liveTranscript && (
                     <p className="mt-1 text-xs text-[#2F75C3] dark:text-[#93C5FD] font-medium">
                       Heard: &ldquo;{liveTranscript}&rdquo;

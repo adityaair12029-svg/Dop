@@ -16,6 +16,7 @@ import { AntigravityLoginScreen } from './components/AntigravityLoginScreen';
 import { InteractiveClickFlow } from './components/InteractiveClickFlow';
 import { VoiceConsole, type GmailMessageItem, type HistoryRecord } from './components/VoiceConsole';
 import { CommandLibrary } from './components/CommandLibrary';
+import type { EcosystemSearchResult } from './shared/ecosystemSearch';
 import {
   DeviceManager,
   type DeviceRecord,
@@ -76,6 +77,7 @@ export default function App() {
   } | null>(null);
   const [apiOnline, setApiOnline] = useState<boolean>(false);
   const [installModalOpen, setInstallModalOpen] = useState<boolean>(false);
+  const [commandSearchPrefill, setCommandSearchPrefill] = useState<string | undefined>(undefined);
 
   const [gmailMessages, setGmailMessages] = useState<GmailMessageItem[]>([]);
   const [gmailLoading, setGmailLoading] = useState(false);
@@ -412,11 +414,24 @@ export default function App() {
 
       <TopBar
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        onSelectTab={(tab) => {
+          setActiveTab(tab);
+          if (tab !== 'commands') setCommandSearchPrefill(undefined);
+        }}
         account={account}
         hasGmailToken={Boolean(gmailToken)}
         apiOnline={apiOnline}
         theme={settings.theme}
+        devices={devices}
+        aliases={aliases}
+        onNavigateSearchResult={(res: EcosystemSearchResult) => {
+          if (res.tab === 'commands') {
+            setCommandSearchPrefill(res.filterText ?? res.title);
+          } else {
+            setCommandSearchPrefill(undefined);
+          }
+          setActiveTab(res.tab);
+        }}
         onToggleTheme={() =>
           void handleUpdateSettings({ theme: settings.theme === 'dark' ? 'light' : 'dark' })
         }
@@ -483,6 +498,7 @@ export default function App() {
           {activeTab === 'commands' && (
             <CommandLibrary
               aliases={aliases}
+              initialSearchQuery={commandSearchPrefill}
               onCreateAlias={async (alias: { phrase: string; action: ActionName; target?: string }) => {
                 const check = validateActionTarget(alias.action, alias.target);
                 if (!check.valid) {

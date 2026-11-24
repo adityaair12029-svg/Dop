@@ -10,6 +10,7 @@ import {
 
 interface CommandLibraryProps {
   aliases: CustomAlias[];
+  initialSearchQuery?: string;
   onCreateAlias: (alias: { phrase: string; action: ActionName; target?: string }) => Promise<void>;
   onDeleteAlias: (id: string) => Promise<void>;
 }
@@ -30,11 +31,19 @@ const CATEGORIES: Array<'All' | CommandCategory> = [
 
 export const CommandLibrary: React.FC<CommandLibraryProps> = ({
   aliases,
+  initialSearchQuery,
   onCreateAlias,
   onDeleteAlias,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<'All' | CommandCategory>('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery ?? '');
+
+  React.useEffect(() => {
+    if (initialSearchQuery !== undefined) {
+      setSearchQuery(initialSearchQuery);
+      setSelectedCategory('All');
+    }
+  }, [initialSearchQuery]);
   const [aliasPhrase, setAliasPhrase] = useState('');
   const [aliasAction, setAliasAction] = useState<ActionName>('open_url');
   const [aliasTarget, setAliasTarget] = useState('https://www.youtube.com');

@@ -305,3 +305,84 @@ test('AI Q&A pure English fallback (math, time, date, El Dorado identity) & Desk
   assert.ok(pyCode.includes('dont_write_bytecode'));
 });
 
+test('Global ecosystem search matches commands, devices, aliases, and settings', async () => {
+  const { searchEcosystem, computeAudioVisualizerMetrics } = await import('./ecosystemSearch');
+
+  const sampleDevices = [
+    {
+      id: 'dev-win-1',
+      name: 'Home Windows 11 PC',
+      platform: 'windows',
+      os_version: 'Windows 11 24H2',
+      status: 'connected',
+      capabilities: ['window_controls', 'open_app'],
+    },
+  ];
+  const sampleAliases = [
+    {
+      id: 'al-1',
+      phrase: 'morning briefing',
+      action: 'read_emails' as const,
+      created_at: new Date().toISOString(),
+    },
+  ];
+
+  assert.equal(searchEcosystem('   ', sampleDevices, sampleAliases).length, 0);
+
+  const cmdMatches = searchEcosystem('youtube', sampleDevices, sampleAliases);
+  assert.ok(cmdMatches.some((r) => r.kind === 'command' && r.tab === 'commands'));
+
+  const devMatches = searchEcosystem('Windows 11', sampleDevices, sampleAliases);
+  assert.ok(devMatches.some((r) => r.kind === 'device' && r.tab === 'devices' && r.title === 'Home Windows 11 PC'));
+
+  const aliasMatches = searchEcosystem('morning briefing', sampleDevices, sampleAliases);
+  assert.ok(aliasMatches.some((r) => r.kind === 'command' && r.title.includes('morning briefing')));
+
+  const settingMatches = searchEcosystem('wake-word', sampleDevices, sampleAliases);
+  assert.ok(settingMatches.some((r) => r.kind === 'setting' && r.tab === 'settings'));
+
+  // Audio visualizer metric calculation
+  const silent = computeAudioVisualizerMetrics(new Uint8Array(64), 12);
+  assert.equal(silent.levelPercent, 0);
+  assert.equal(silent.receivingAudio, false);
+  assert.equal(silent.bars.length, 12);
+
+  const speaking = new Uint8Array(64).fill(140);
+  const active = computeAudioVisualizerMetrics(speaking, 12);
+  assert.ok(active.levelPercent > 40);
+  assert.equal(active.receivingAudio, true);
+  assert.ok(active.bars.every((b) => b > 40));
+});
+
+test('Security headers, security.txt, favicon, canonical URL, and static H1 are configured', async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const root = process.cwd();
+
+  const vercelCfg = JSON.parse(fs.readFileSync(path.join(root, 'vercel.json'), 'utf-8')) as {
+    headers: Array<{ source: string; headers: Array<{ key: string; value: string }> }>;
+  };
+  const globalHeaders = vercelCfg.headers.find((h) => h.source === '/(.*)')?.headers ?? [];
+  const headerMap = new Map(globalHeaders.map((h) => [h.key, h.value]));
+
+  assert.ok(headerMap.get('Content-Security-Policy')?.includes("object-src 'none'"));
+  assert.equal(headerMap.get('X-Frame-Options'), 'SAMEORIGIN');
+  assert.equal(headerMap.get('X-Content-Type-Options'), 'nosniff');
+  assert.equal(headerMap.get('Referrer-Policy'), 'strict-origin-when-cross-origin');
+  assert.ok(headerMap.get('Permissions-Policy')?.includes('microphone=(self)'));
+  assert.equal(headerMap.get('Cross-Origin-Opener-Policy'), 'same-origin-allow-popups');
+  assert.equal(headerMap.get('Cross-Origin-Resource-Policy'), 'same-origin');
+
+  const secTxt = fs.readFileSync(path.join(root, 'public', '.well-known', 'security.txt'), 'utf-8');
+  assert.match(secTxt, /Contact:\s*mailto:/i);
+  assert.match(secTxt, /Expires:/i);
+
+  assert.ok(fs.existsSync(path.join(root, 'public', 'favicon.svg')));
+
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf-8');
+  assert.match(html, /<link[^>]+rel="icon"/i);
+  assert.match(html, /<link[^>]+rel="canonical"/i);
+  assert.match(html, /<h1>.*El Dorado/i);
+});
+
+
