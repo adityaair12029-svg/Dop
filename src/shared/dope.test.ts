@@ -366,6 +366,7 @@ test('Security headers, security.txt, favicon, canonical URL, and static H1 are 
   const headerMap = new Map(globalHeaders.map((h) => [h.key, h.value]));
 
   assert.ok(headerMap.get('Content-Security-Policy')?.includes("object-src 'none'"));
+  assert.ok(headerMap.get('Content-Security-Policy')?.includes('https://pagead2.googlesyndication.com'));
   assert.equal(headerMap.get('X-Frame-Options'), 'SAMEORIGIN');
   assert.equal(headerMap.get('X-Content-Type-Options'), 'nosniff');
   assert.equal(headerMap.get('Referrer-Policy'), 'strict-origin-when-cross-origin');
@@ -383,6 +384,10 @@ test('Security headers, security.txt, favicon, canonical URL, and static H1 are 
   assert.match(html, /<link[^>]+rel="icon"/i);
   assert.match(html, /<link[^>]+rel="canonical"/i);
   assert.match(html, /<h1>.*El Dorado/i);
+  assert.match(
+    html,
+    /pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js\?client=ca-pub-8553738834266214/i
+  );
 });
 
 
